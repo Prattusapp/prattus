@@ -307,7 +307,8 @@ export default function MealCountDetailed() {
         <Button onClick={handleSearch} disabled={searching} className="rounded-xl bg-blue-600 h-10 font-bold gap-2">{searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Buscar</Button>
       </div>
 
-      <div className="space-y-10 px-2 max-w-full overflow-x-auto" ref={printRef}>
+      <div className="w-full overflow-x-auto pb-4">
+        <div className="space-y-10 px-2 min-w-[210mm]" ref={printRef}>
         {searching ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /><p className="font-bold text-muted-foreground">Cruzando dados...</p></div>
         ) : activeTypesToDisplay.map((type, idx) => {
@@ -319,16 +320,16 @@ export default function MealCountDetailed() {
             const creator = creatorsMap[winnerId || ""];
 
             return (
-              <div key={type.id} className="bg-white text-slate-950 p-4 md:p-[15mm] border rounded-2xl shadow-sm print:shadow-none print:border-none print:p-0 break-after-page min-h-0 md:min-h-[180mm] w-fit min-w-full md:w-[210mm] mx-auto">
-                <div className="flex flex-col md:flex-row justify-between items-stretch mb-10 gap-6 md:gap-0">
-                  <div className="w-full md:w-[70mm] flex items-center justify-center md:justify-start">
+              <div key={type.id} className="bg-white text-slate-950 p-[15mm] border rounded-2xl shadow-sm print:shadow-none print:border-none print:p-0 break-after-page min-h-[180mm] w-[210mm] mx-auto">
+                <div className="flex justify-between items-stretch mb-10">
+                  <div className="w-[70mm] flex items-center justify-start">
                     {company?.logo_url && <img src={company.logo_url} alt="Logo" className="max-h-[80px] w-auto object-contain" />}
                   </div>
                   <div className="flex-1 px-8 flex flex-col justify-start pt-1">
                     <h2 className="text-2xl font-bold text-blue-700 leading-tight">{company?.razao_social || "Ideal Alimentação"}</h2>
                     <p className="text-[10px] font-medium text-slate-400 tracking-wider">RELATÓRIO ANALÍTICO - {type.name.toUpperCase()}</p>
                   </div>
-                  <div className="w-full md:w-[120mm] border border-slate-200 rounded-2xl p-4 bg-slate-50/50 text-center md:text-right flex flex-col justify-center">
+                  <div className="w-[120mm] border border-slate-200 rounded-2xl p-4 bg-slate-50/50 text-right flex flex-col justify-center">
                     <h2 className="text-[11px] font-black text-slate-800 leading-tight uppercase">{currentUnit?.name || "UNIDADE"}</h2>
                     <p className="text-[9px] font-bold text-slate-500 mt-1">CNPJ: {currentUnit?.cnpj || "---"} | Período: {format(parseISO(startDate), 'dd/MM/yyyy')} - {format(parseISO(endDate), 'dd/MM/yyyy')}</p>
                     <p className="text-[9px] font-medium text-slate-400">{formatAddress(currentUnit)}</p>
@@ -376,6 +377,8 @@ export default function MealCountDetailed() {
             )
           })}
       </div>
+      </div>
+
       <style>{`
         @media print {
           @page { size: A4 landscape; margin: 10mm; }
