@@ -180,7 +180,6 @@ export default function ConfigPage() {
       let uQuery = supabase.from('hospital_unidades').select('*').order('name')
       if (profile?.role !== 'gerente' && profile?.unidade_id) {
         uQuery = uQuery.eq('id', profile.unidade_id)
-        if (activeTab === 'empresa' || activeTab === 'unidades') setActiveTab('setores')
       }
       const { data: uData } = await uQuery
       setUnidades(uData || [])
@@ -457,14 +456,10 @@ export default function ConfigPage() {
 
        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-hidden">
          <TabsList className="w-full bg-muted/20 p-1.5 rounded-2xl h-auto grid grid-cols-2 md:flex md:flex-wrap lg:flex-nowrap gap-1.5 border border-border/50 mb-6 md:mb-8 whitespace-normal shadow-inner">
-          {isGerente && (
-            <>
-              <TabsTrigger value="empresa" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Building className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Empresa</span></TabsTrigger>
-              <TabsTrigger value="unidades" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
-                <Hospital className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Unidades</span>
-              </TabsTrigger>
-            </>
-          )}
+          <TabsTrigger value="empresa" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Building className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Empresa</span></TabsTrigger>
+          <TabsTrigger value="unidades" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+            <Hospital className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">{isGerente ? "Unidades" : "Minha Unidade"}</span>
+          </TabsTrigger>
           <TabsTrigger value="setores" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Layers className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Setores</span></TabsTrigger>
           <TabsTrigger value="publico" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Users className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Públicos</span></TabsTrigger>
           
@@ -491,30 +486,32 @@ export default function ConfigPage() {
                   {company.logo_url ? (
                     <img src={company.logo_url} className="h-full w-full object-contain" />
                   ) : <ImageIcon className="h-8 w-8 text-slate-400" />}
-                  <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-bold transition-opacity cursor-pointer uppercase tracking-widest">
-                    <Upload className="h-5 w-5 mb-1" /> Alterar Logo
-                    <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
-                  </label>
+                  {isGerente && (
+                    <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-bold transition-opacity cursor-pointer uppercase tracking-widest">
+                      <Upload className="h-5 w-5 mb-1" /> Alterar Logo
+                      <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+                    </label>
+                  )}
                 </div>
                 <div className="flex-1 space-y-4 w-full">
                   <div className="grid gap-4 grid-cols-1">
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Razão Social</Label>
-                       <Input value={company.razao_social} onChange={(e) => setCompany({...company, razao_social: e.target.value})} className="rounded-xl h-11 md:h-12" />
+                       <Input readOnly={!isGerente} value={company.razao_social} onChange={(e) => setCompany({...company, razao_social: e.target.value})} className="rounded-xl h-11 md:h-12" />
                     </div>
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">CNPJ</Label>
-                       <Input value={company.cnpj} onChange={(e) => setCompany({...company, cnpj: maskCNPJ(e.target.value)})} className="rounded-xl h-11 md:h-12" placeholder="00.000.000/0000-00" />
+                       <Input readOnly={!isGerente} value={company.cnpj} onChange={(e) => setCompany({...company, cnpj: maskCNPJ(e.target.value)})} className="rounded-xl h-11 md:h-12" placeholder="00.000.000/0000-00" />
                     </div>
                   </div>
                   <div className="grid gap-4 grid-cols-1">
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">WhatsApp</Label>
-                       <Input value={company.whatsapp} onChange={(e) => setCompany({...company, whatsapp: maskPhone(e.target.value)})} className="rounded-xl h-11 md:h-12" placeholder="(00) 00000-0000" />
+                       <Input readOnly={!isGerente} value={company.whatsapp} onChange={(e) => setCompany({...company, whatsapp: maskPhone(e.target.value)})} className="rounded-xl h-11 md:h-12" placeholder="(00) 00000-0000" />
                     </div>
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">E-mail</Label>
-                       <Input value={company.email} onChange={(e) => setCompany({...company, email: e.target.value})} className="rounded-xl h-11 md:h-12" placeholder="contato@hospital.com.br" />
+                       <Input readOnly={!isGerente} value={company.email} onChange={(e) => setCompany({...company, email: e.target.value})} className="rounded-xl h-11 md:h-12" placeholder="contato@hospital.com.br" />
                     </div>
                   </div>
                 </div>
@@ -525,40 +522,42 @@ export default function ConfigPage() {
                 <div className="grid gap-4 grid-cols-1">
                    <div className="space-y-2">
                       <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">CEP</Label>
-                      <Input value={company.cep} onChange={(e) => setCompany({...company, cep: maskCEP(e.target.value)})} onBlur={() => fetchCEP(company.cep, setCompany)} className="rounded-xl h-11 md:h-12 text-sm" placeholder="00000-000" />
+                      <Input readOnly={!isGerente} value={company.cep} onChange={(e) => setCompany({...company, cep: maskCEP(e.target.value)})} onBlur={() => isGerente && fetchCEP(company.cep, setCompany)} className="rounded-xl h-11 md:h-12 text-sm" placeholder="00000-000" />
                    </div>
                 </div>
                   <div className="grid gap-4 grid-cols-1">
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Logradouro</Label>
-                       <Input value={company.logradouro} onChange={(e) => setCompany({...company, logradouro: e.target.value})} className="rounded-xl h-11 md:h-12" />
+                       <Input readOnly={!isGerente} value={company.logradouro} onChange={(e) => setCompany({...company, logradouro: e.target.value})} className="rounded-xl h-11 md:h-12" />
                     </div>
                   </div>
                   <div className="grid grid-cols-1 gap-4">
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Número</Label>
-                       <Input value={company.numero} onChange={(e) => setCompany({...company, numero: e.target.value})} className="rounded-xl h-11 md:h-12" />
+                       <Input readOnly={!isGerente} value={company.numero} onChange={(e) => setCompany({...company, numero: e.target.value})} className="rounded-xl h-11 md:h-12" />
                     </div>
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Bairro</Label>
-                       <Input value={company.bairro} onChange={(e) => setCompany({...company, bairro: e.target.value})} className="rounded-xl h-11 md:h-12" />
+                       <Input readOnly={!isGerente} value={company.bairro} onChange={(e) => setCompany({...company, bairro: e.target.value})} className="rounded-xl h-11 md:h-12" />
                     </div>
                     <div className="space-y-2">
                        <Label className="font-bold text-[10px] uppercase tracking-widest text-muted-foreground">Cidade/UF</Label>
                        <div className="flex gap-2">
-                         <Input value={company.cidade} onChange={(e) => setCompany({...company, cidade: e.target.value})} className="rounded-xl h-11 md:h-12 flex-1" />
-                         <Input value={company.uf} onChange={(e) => setCompany({...company, uf: e.target.value.toUpperCase()})} className="rounded-xl h-11 md:h-12 w-16 px-1 text-center" maxLength={2} />
+                         <Input readOnly={!isGerente} value={company.cidade} onChange={(e) => setCompany({...company, cidade: e.target.value})} className="rounded-xl h-11 md:h-12 flex-1" />
+                         <Input readOnly={!isGerente} value={company.uf} onChange={(e) => setCompany({...company, uf: e.target.value.toUpperCase()})} className="rounded-xl h-11 md:h-12 w-16 px-1 text-center" maxLength={2} />
                        </div>
                     </div>
                   </div>
               </div>
 
-              <div className="flex justify-end pt-8">
-                 <Button onClick={saveCompany} disabled={loading} className="w-full md:w-auto rounded-2xl h-14 px-10 bg-blue-600 hover:bg-blue-500 font-bold shadow-lg shadow-blue-500/20">
-                   {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Save className="h-5 w-5 mr-2" />}
-                   Salvar Alterações
-                 </Button>
-              </div>
+              {isGerente && (
+                <div className="flex justify-end pt-8">
+                   <Button onClick={saveCompany} disabled={loading} className="w-full md:w-auto rounded-2xl h-14 px-10 bg-blue-600 hover:bg-blue-500 font-bold shadow-lg shadow-blue-500/20">
+                     {loading ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Save className="h-5 w-5 mr-2" />}
+                     Salvar Alterações
+                   </Button>
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -659,8 +658,12 @@ export default function ConfigPage() {
                          </div>
                        </div>
                        <div className="flex gap-1 shrink-0">
-                          <Button variant="ghost" size="icon" className="h-9 w-9 bg-muted/30 rounded-xl" onClick={() => { setEditingUnit(u); setUnitData(u); setUnitDialogOpen(true); }}><Pencil className="h-4 w-4 text-blue-600" /></Button>
-                          <Button variant="ghost" size="icon" className="h-9 w-9 bg-rose-50 rounded-xl" onClick={async () => { if(confirm("Deseja realmente apagar esta unidade?")) { await supabase.from('hospital_unidades').delete().eq('id', u.id); fetchData(); } }}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
+                          {isGerente && (
+                            <>
+                              <Button variant="ghost" size="icon" className="h-9 w-9 bg-muted/30 rounded-xl" onClick={() => { setEditingUnit(u); setUnitData(u); setUnitDialogOpen(true); }}><Pencil className="h-4 w-4 text-blue-600" /></Button>
+                              <Button variant="ghost" size="icon" className="h-9 w-9 bg-rose-50 rounded-xl" onClick={async () => { if(confirm("Deseja realmente apagar esta unidade?")) { await supabase.from('hospital_unidades').delete().eq('id', u.id); fetchData(); } }}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
+                            </>
+                          )}
                        </div>
                      </div>
 
@@ -723,10 +726,12 @@ export default function ConfigPage() {
                             </div>
                           </TableCell>
                          <TableCell className="text-right pr-8">
-                           <div className="flex items-center justify-end gap-2">
-                              <Button variant="ghost" size="icon" onClick={() => { setEditingUnit(u); setUnitData(u); setUnitDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
-                              <Button variant="ghost" size="icon" className="text-rose-600" onClick={async () => { if(confirm("Apagar?")) { await supabase.from('hospital_unidades').delete().eq('id', u.id); fetchData(); } }}><Trash2 className="h-4 w-4" /></Button>
-                           </div>
+                           {isGerente && (
+                             <div className="flex items-center justify-end gap-2">
+                                <Button variant="ghost" size="icon" onClick={() => { setEditingUnit(u); setUnitData(u); setUnitDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="text-rose-600" onClick={async () => { if(confirm("Apagar?")) { await supabase.from('hospital_unidades').delete().eq('id', u.id); fetchData(); } }}><Trash2 className="h-4 w-4" /></Button>
+                             </div>
+                           )}
                          </TableCell>
                        </TableRow>
                      ))}
