@@ -1018,10 +1018,9 @@ export default function ConfigPage() {
             <div className="space-y-2">
               <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground">Unidade</Label>
               <select 
-                disabled={!isGerente}
                 value={sectorData.unidade_id} 
                 onChange={(e) => setSectorData({...sectorData, unidade_id: e.target.value})} 
-                className="w-full h-11 rounded-xl border px-3 bg-muted/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-11 rounded-xl border px-3 bg-muted/20"
               >
                 <option value="">Selecione...</option>
                 {unidades.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
@@ -1079,10 +1078,9 @@ export default function ConfigPage() {
              <div className="space-y-2">
                 <Label>Unidade</Label>
                 <select 
-                  disabled={!isGerente}
                   value={publicData.unidade_id} 
                   onChange={(e) => setPublicData({...publicData, unidade_id: e.target.value})} 
-                  className="w-full h-11 rounded-xl border px-3 bg-muted/20 disabled:opacity-70 disabled:cursor-not-allowed"
+                  className="w-full h-11 rounded-xl border px-3 bg-muted/20"
                 >
                   <option value="">Selecione...</option>
                   {unidades.map(u => <option key={u.id} value={u.id}>{u.name}</option>)}
