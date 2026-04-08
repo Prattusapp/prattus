@@ -336,7 +336,7 @@ export default function MealCountDetailed() {
                 </div>
                 <div className="h-0.5 bg-blue-600 w-full mb-4 bg-opacity-70"></div>
                 <p className="mb-6 font-bold text-slate-800 text-sm">Referência: {format(parseISO(startDate), "dd/MM/yyyy")} até {format(parseISO(endDate), "dd/MM/yyyy")}</p>
-                <div className="overflow-hidden border border-slate-300 rounded-sm mb-10">
+                <div className="overflow-x-auto border border-slate-300 rounded-sm mb-10">
                   <table className="w-full border-collapse">
                     <thead className="bg-[#2563eb] text-white uppercase font-bold text-[10px]">
                       <tr>
