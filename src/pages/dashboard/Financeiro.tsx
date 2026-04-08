@@ -244,13 +244,13 @@ export default function Financeiro() {
 
       setServiceData(
         Object.entries(serviceMap)
-          .map(([name, value]) => ({ name, value }))
+          .map(([name, value]) => ({ name, value: value as number }))
           .sort((a, b) => b.value - a.value)
       )
       
       setPublicData(
         Object.entries(publicMap)
-          .map(([name, value]) => ({ name, value }))
+          .map(([name, value]) => ({ name, value: value as number }))
           .sort((a, b) => b.value - a.value)
       )
 
