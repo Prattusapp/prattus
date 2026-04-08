@@ -576,7 +576,7 @@ export default function Financeiro() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-1 gap-2 pr-2">
-               {serviceData.sort((a,b) => b.value - a.value).map((item, idx) => {
+               {[...serviceData].sort((a,b) => b.value - a.value).map((item, idx) => {
                  const serviceKey = item.name.toLowerCase().replace(' ', '_').replace('á', 'a').replace('ç', 'c')
                  const isActive = selectedService === serviceKey
                  
