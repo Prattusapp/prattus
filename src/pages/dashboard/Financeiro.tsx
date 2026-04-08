@@ -562,7 +562,10 @@ export default function Financeiro() {
                     paddingAngle={5}
                     dataKey="value"
                     onClick={(data) => {
-                      const serviceKey = data?.name?.toLowerCase().replace(' ', '_').replace('á', 'a').replace('ç', 'c')
+                      const serviceKey = data?.name?.toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, "")
+                        .replace(' ', '_')
                       if (serviceKey) setSelectedService(serviceKey)
                     }}
                     className="cursor-pointer outline-none"
@@ -572,7 +575,7 @@ export default function Financeiro() {
                     ))}
                   </Pie>
                   <Tooltip 
-                    formatter={(val: any) => [formatCurrency(val), "Faturamento"]}
+                    formatter={(val: any, name: any) => [formatCurrency(val), name]}
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
                       borderColor: 'hsl(var(--border))',
@@ -587,7 +590,10 @@ export default function Financeiro() {
             </div>
             <div className="grid grid-cols-1 gap-2 pr-2">
                {serviceData.map((item, idx) => {
-                 const serviceKey = item.name.toLowerCase().replace(' ', '_').replace('á', 'a').replace('ç', 'c')
+                 const serviceKey = item.name.toLowerCase()
+                   .normalize('NFD')
+                   .replace(/[\u0300-\u036f]/g, "")
+                   .replace(' ', '_')
                  const isActive = selectedService === serviceKey
                  
                  return (
