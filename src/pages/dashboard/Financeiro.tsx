@@ -242,8 +242,18 @@ export default function Financeiro() {
         efficiency: efficiency.toFixed(1) + "%"
       })
 
-      setServiceData(Object.entries(serviceMap).map(([name, value]) => ({ name, value })))
-      setPublicData(Object.entries(publicMap).map(([name, value]) => ({ name, value })))
+      setServiceData(
+        Object.entries(serviceMap)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value)
+      )
+      
+      setPublicData(
+        Object.entries(publicMap)
+          .map(([name, value]) => ({ name, value }))
+          .sort((a, b) => b.value - a.value)
+      )
+
       setDailyTrend(Object.entries(trendMap).sort().map(([date, value]) => {
         const [, month, day] = date.split('-')
         return { 
@@ -576,7 +586,7 @@ export default function Financeiro() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-1 gap-2 pr-2">
-               {[...serviceData].sort((a,b) => b.value - a.value).map((item, idx) => {
+               {serviceData.map((item, idx) => {
                  const serviceKey = item.name.toLowerCase().replace(' ', '_').replace('á', 'a').replace('ç', 'c')
                  const isActive = selectedService === serviceKey
                  
