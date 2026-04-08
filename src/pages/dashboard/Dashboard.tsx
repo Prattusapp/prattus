@@ -181,7 +181,7 @@ export default function Dashboard() {
       setTrendData(Object.values(trendMap))
 
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     } finally {
       setLoading(false)
     }

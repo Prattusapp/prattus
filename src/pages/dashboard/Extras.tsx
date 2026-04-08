@@ -44,7 +44,7 @@ export default function Extras() {
       if (error) throw error
       setExtras(data || [])
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     } finally {
       setLoading(false)
     }
@@ -60,7 +60,7 @@ export default function Extras() {
       if (error) throw error
       fetchExtras()
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     }
   }
 

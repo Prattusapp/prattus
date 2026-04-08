@@ -71,7 +71,7 @@ export default function MealCountView() {
           setCreatorsMap(pMap)
         }
       }
-    } catch (err) { console.error(err) } finally { setLoading(false) }
+    } catch (err) { import.meta.env.DEV && console.error(err) } finally { setLoading(false) }
   }
 
   const getMajorCreator = () => {
@@ -148,7 +148,7 @@ export default function MealCountView() {
       const safeDate = date ? date.split('T')[0] : 'relatorio'
       const fileName = `SINTETICO_${safeDate}.pdf`
       doc.save(fileName)
-    } catch (err: any) { console.error(err); alert("Erro ao gerar PDF."); } finally { setLoading(false) }
+    } catch (err: any) { import.meta.env.DEV && console.error(err); alert("Erro ao gerar PDF."); } finally { setLoading(false) }
   }
 
   const exportXLSX = () => {

@@ -1,10 +1,20 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2"
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts"
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const userCreationSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+  full_name: z.string().min(3),
+  whatsapp: z.string().optional(),
+  role: z.string(),
+  crn: z.string().optional()
+});
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -39,7 +49,11 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { email, password, full_name, whatsapp, role } = await req.json()
+    // Valida o payload de injeção através do Schema do Zod
+    const rawBody = await req.json();
+    const parsedData = userCreationSchema.parse(rawBody);
+
+    const { email, password, full_name, whatsapp, role, crn } = parsedData;
 
     const { data: newUser, error: createError } = await adminClient.auth.admin.createUser({
       email,
@@ -48,6 +62,7 @@ serve(async (req) => {
       user_metadata: { 
         full_name, 
         whatsapp, 
+        crn,
         role, 
         require_password_change: true,
         institution_id: requesterProfile?.institution_id 
@@ -62,6 +77,7 @@ serve(async (req) => {
       .update({ 
         full_name, 
         whatsapp, 
+        crn,
         role, 
         require_password_change: true,
         email: email,
@@ -76,7 +92,12 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    let errorMessage = error.message;
+    // Captura erros de parsing do Zod especificamente
+    if (error instanceof z.ZodError) {
+      errorMessage = "Erro de validação nos dados fornecidos: " + error.errors.map(e => e.message).join(', ');
+    }
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 400,
     })

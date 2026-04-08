@@ -104,7 +104,7 @@ export default function MealCountSpreadsheet() {
       const { data: sectorsData } = await supabase.from('hospital_setores').select('*').eq('active', true).order('name')
       setSectors(sectorsData || [])
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     }
   }
 
@@ -127,7 +127,7 @@ export default function MealCountSpreadsheet() {
         }
       }
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     }
   }
 
@@ -167,7 +167,7 @@ export default function MealCountSpreadsheet() {
 
       setData(initialData)
     } catch (err: any) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
       setStatus({ type: 'error', message: "Falha ao carregar contagens" })
     } finally {
       setLoading(false)
@@ -242,7 +242,7 @@ export default function MealCountSpreadsheet() {
       if (error) throw error
       setStatus({ type: 'success', message: "Dados salvos com sucesso!" })
     } catch (err: any) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
       setStatus({ type: 'error', message: "Erro ao salvar: " + err.message })
     } finally {
       setSaving(false)

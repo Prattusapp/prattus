@@ -31,6 +31,7 @@ import { cn } from "@/lib/utils"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { sanitizeExportCell } from "@/lib/sanitize"
 
 const COLORS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4"]
 
@@ -77,18 +78,24 @@ export default function Financeiro() {
       const { data: cfg } = await supabase.from('hospital_config').select('*').single()
       setConfig(cfg)
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     }
   }
 
   const calculateFinancials = async () => {
     setLoading(true)
     try {
-      // Cálculo do período anterior para comparação
       const start = new Date(startDate)
       const end = new Date(endDate)
-      const diffTime = Math.abs(end.getTime() - start.getTime())
+      const diffTime = end.getTime() - start.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1
+
+      // 0. TRAVA DE DOS (Denial of Service): Limite Seguro
+      if (diffDays > 90) {
+        alert("Proteção Ativada: O limite da pesquisa é de 90 dias consecutivos para preservar a memória e estabilidade da nuvem. Segmente o seu relatório em períodos menores.")
+        setRawData([])
+        return
+      }
 
       const prevEnd = new Date(start)
       prevEnd.setDate(prevEnd.getDate() - 1)
@@ -184,18 +191,20 @@ export default function Financeiro() {
         : `${((totalMeals / (prevTotalMeals || 1) - 1) * 100).toFixed(1)}%`
 
 
-      // Lista para exportação
+      // Lista para exportação (Sanitizando Células para Excel/PDF contra Injection)
       const exportList: any[] = []
 
       meals?.forEach(m => {
         const qty = m.quantidade || 0
         const price = prices[m.tipo_refeicao] || 0
-        const pName = m.contagem_tipos?.name || 'Não Informado'
-        const sName = m.tipo_refeicao === 'lanche_noite' ? 'Lanche Noite' : m.tipo_refeicao.charAt(0).toUpperCase() + m.tipo_refeicao.slice(1).replace('_', ' ')
+        const pName = sanitizeExportCell(m.contagem_tipos?.name || 'Não Informado')
+        const rawServiceName = m.tipo_refeicao === 'lanche_noite' ? 'Lanche Noite' : m.tipo_refeicao.charAt(0).toUpperCase() + m.tipo_refeicao.slice(1).replace('_', ' ')
+        const sName = sanitizeExportCell(rawServiceName)
+        const setorName = sanitizeExportCell(m.hospital_setores?.name || 'Não Informado')
         
         exportList.push({
           Data: m.data.split('-').reverse().join('/'),
-          Setor: m.hospital_setores?.name || 'Não Informado',
+          Setor: setorName,
           Serviço: sName,
           Público: pName,
           Quantidade: qty,
@@ -263,7 +272,7 @@ export default function Financeiro() {
       }))
 
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     } finally {
       setLoading(false)
     }

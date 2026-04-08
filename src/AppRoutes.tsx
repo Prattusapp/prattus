@@ -17,6 +17,7 @@ import MealCountView from "@/pages/dashboard/MealCountView"
 import OnboardingPage from "@/pages/onboarding/OnboardingPage"
 import Financeiro from "@/pages/dashboard/Financeiro"
 import { PasswordChangeGate } from "@/components/auth/PasswordChangeGate"
+import { RoleGuard } from "@/components/auth/RoleGuard"
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null)
@@ -134,7 +135,9 @@ export default function AppRoutes() {
           path="/config" 
           element={
             <ProtectedRoute>
-              <MainLayout><ConfigPage /></MainLayout>
+              <RoleGuard allowedRoles={['gerente']} fallbackPath="/dashboard">
+                <MainLayout><ConfigPage /></MainLayout>
+              </RoleGuard>
             </ProtectedRoute>
           } 
         />
@@ -152,7 +155,9 @@ export default function AppRoutes() {
           path="/financeiro" 
           element={
             <ProtectedRoute>
-              <MainLayout><Financeiro /></MainLayout>
+              <RoleGuard allowedRoles={['gerente']}>
+                <MainLayout><Financeiro /></MainLayout>
+              </RoleGuard>
             </ProtectedRoute>
           } 
         />

@@ -41,7 +41,7 @@ export default function Lactario() {
       if (error) throw error
       setItems(data || [])
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     } finally {
       setLoading(false)
     }
@@ -57,7 +57,7 @@ export default function Lactario() {
       if (error) throw error
       fetchLactario()
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     }
   }
 

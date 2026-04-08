@@ -203,7 +203,7 @@ export default function ConfigPage() {
 
       if (profile?.role === 'gerente') fetchUsers()
     } catch (err) {
-      console.error(err)
+      import.meta.env.DEV && console.error(err)
     } finally {
       setLoading(false)
     }
@@ -231,7 +231,7 @@ export default function ConfigPage() {
           }))
         }
       } catch (err) {
-        console.error("Erro ao buscar CEP")
+        import.meta.env.DEV && console.error("Erro ao buscar CEP")
       }
     }
   }
@@ -239,9 +239,22 @@ export default function ConfigPage() {
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+
+    // Validações de Backend Replicadas no Client para UX Instantânea
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!allowedTypes.includes(file.type)) {
+      setMsg({ type: 'error', text: 'Formato inaceitável. Envie apenas as extensões reais JPG, PNG ou WEBP.' })
+      return
+    }
+
+    if (file.size > 2 * 1024 * 1024) { // 2 Megabytes Físicos
+      setMsg({ type: 'error', text: 'Desculpe, o tamanho da logo viola as regras. O máximo permitido são 2MB.' })
+      return
+    }
+
     setLoading(true)
     try {
-      const fileExt = file.name.split('.').pop()
+      const fileExt = file.name.split('.').pop()?.toLowerCase()
       const fileName = `logo_${Math.random()}.${fileExt}`
       const { error: uploadError } = await supabase.storage.from('logos').upload(fileName, file)
       if (uploadError) throw uploadError
@@ -249,9 +262,9 @@ export default function ConfigPage() {
       const { error } = await supabase.from('hospital_config').update({ logo_url: publicUrl }).eq('id', (company as any).id || 1)
       if (error) throw error
       setCompany(prev => ({ ...prev, logo_url: publicUrl }))
-      setMsg({ type: 'success', text: "Logo atualizada!" })
+      setMsg({ type: 'success', text: "Logo atualizada com segurança e êxito!" })
     } catch (err: any) {
-      setMsg({ type: 'error', text: err.message })
+      setMsg({ type: 'error', text: err.message || 'Erro ao comunicar com o Bucket.' })
     } finally {
       setLoading(false)
     }

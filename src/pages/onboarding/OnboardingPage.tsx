@@ -56,7 +56,7 @@ export default function OnboardingPage() {
             uf: data.uf
           }))
         }
-      } catch (err) { console.error(err) }
+      } catch (err) { import.meta.env.DEV && console.error(err) }
     }
   }
 

@@ -68,7 +68,7 @@ export default function Register() {
         .eq('id', authData.user.id)
 
       if (profileError) {
-        console.error("Erro ao atualizar perfil:", profileError)
+        import.meta.env.DEV && console.error("Erro ao atualizar perfil:", profileError)
       }
       
       navigate("/dashboard")

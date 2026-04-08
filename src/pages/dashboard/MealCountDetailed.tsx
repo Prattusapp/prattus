@@ -63,7 +63,7 @@ export default function MealCountDetailed() {
       const { data: uData } = await supabase.from('hospital_unidades').select('*').order('name')
       setUnidades(uData || [])
       if (uData && uData.length > 0) setSelectedUnitId(uData[0].id)
-    } catch (err) { console.error(err) } finally { setLoading(false) }
+    } catch (err) { import.meta.env.DEV && console.error(err) } finally { setLoading(false) }
   }
 
   useEffect(() => { if (selectedUnitId) fetchTypesByUnit() }, [selectedUnitId])
@@ -72,7 +72,7 @@ export default function MealCountDetailed() {
     try {
       const { data } = await supabase.from('contagem_tipos').select('id, name').eq('unidade_id', selectedUnitId).eq('active', true).order('name')
       setCountTypes(data || [])
-    } catch (err) { console.error(err) }
+    } catch (err) { import.meta.env.DEV && console.error(err) }
   }
 
   const handleSearch = async () => {
@@ -93,7 +93,7 @@ export default function MealCountDetailed() {
         profiles?.forEach(p => { pMap[p.id] = p })
         setCreatorsMap(pMap)
       }
-    } catch (err) { console.error(err) } finally { setSearching(false) }
+    } catch (err) { import.meta.env.DEV && console.error(err) } finally { setSearching(false) }
   }
 
   const getCountValue = (sectorId: number, mealId: MealType, typeId: string) => {
@@ -175,7 +175,7 @@ export default function MealCountDetailed() {
         doc.setFontSize(7).text(`Folha ${idx + 1} de ${activeTypesToDisplay.length} | Gerado em ${format(new Date(), "dd/MM/yyyy HH:mm")}`, 282, 195, { align: 'right' })
       })
       doc.save(`Relatorio_Analitico_Prattus_${startDate}_a_${endDate}.pdf`)
-    } catch (err) { console.error(err); alert("Erro ao gerar PDF."); }
+    } catch (err) { import.meta.env.DEV && console.error(err); alert("Erro ao gerar PDF."); }
   }
   
   const exportXLS = () => {

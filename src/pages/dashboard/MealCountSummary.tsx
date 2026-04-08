@@ -112,7 +112,7 @@ export default function MealCountSummary() {
 
       setRecords(result)
     } catch (err) {
-      console.error("Error fetching archives:", err)
+      import.meta.env.DEV && console.error("Error fetching archives:", err)
     } finally {
       setLoading(false)
     }
