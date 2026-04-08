@@ -1,12 +1,5 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogDescription
-} from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -83,77 +76,79 @@ export function PasswordChangeGate({ children }: { children: React.ReactNode }) 
     <>
       {children}
       
-      <Dialog open={open} onOpenChange={() => {}}>
-        <DialogContent className="max-w-md rounded-3xl border-none shadow-2xl" onPointerDownOutside={(e) => e.preventDefault()}>
-          <DialogHeader className="items-center text-center p-4">
-            <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
-              <ShieldAlert className="h-8 w-8 text-blue-600" />
+      {open && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+            <div className="items-center text-center p-6 pb-2">
+              <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <ShieldAlert className="h-8 w-8 text-blue-600" />
+              </div>
+              <h2 className="text-2xl font-black text-slate-900">Primeiro Acesso Seguro</h2>
+              <p className="text-slate-500 mt-2 text-sm">
+                Para sua segurança, você precisa definir uma senha pessoal e permanente antes de começar a usar o Prattus.
+              </p>
             </div>
-            <DialogTitle className="text-2xl font-black">Primeiro Acesso Seguro</DialogTitle>
-            <DialogDescription className="text-slate-500">
-              Para sua segurança, você precisa definir uma senha pessoal e permanente antes de começar a usar o Prattus.
-            </DialogDescription>
-          </DialogHeader>
 
-          {!success ? (
-            <div className="space-y-6 py-6 px-4">
-              {error && (
-                <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-xs font-bold flex items-center gap-2 border border-rose-100 animate-in fade-in slide-in-from-top-2">
-                  <ShieldAlert className="h-4 w-4" />
-                  {error}
+            {!success ? (
+              <div className="space-y-6 py-6 px-6">
+                {error && (
+                  <div className="bg-rose-50 text-rose-600 p-3 rounded-xl text-xs font-bold flex items-center gap-2 border border-rose-100">
+                    <ShieldAlert className="h-4 w-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs uppercase tracking-widest text-slate-500 px-1">Nova Senha Pessoal</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      type="password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10 rounded-xl h-12 bg-slate-50 focus:bg-white transition-all border-slate-200"
+                      placeholder="Mínimo 6 caracteres"
+                    />
+                  </div>
                 </div>
-              )}
 
-              <div className="space-y-2">
-                <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground px-1">Nova Senha Pessoal</Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10 rounded-xl h-12 bg-slate-50 focus:bg-white transition-all"
-                    placeholder="Mínimo 6 caracteres"
-                  />
+                <div className="space-y-2">
+                  <Label className="font-bold text-xs uppercase tracking-widest text-slate-500 px-1">Confirmar Nova Senha</Label>
+                  <div className="relative">
+                    <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                    <Input 
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="pl-10 rounded-xl h-12 bg-slate-50 focus:bg-white transition-all border-slate-200"
+                      placeholder="Repita sua senha"
+                    />
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={handleUpdate} 
+                  disabled={loading}
+                  className="w-full rounded-2xl h-12 bg-blue-600 hover:bg-blue-500 font-black shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-white mt-4"
+                >
+                  {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Ativar Minha Conta AGORA
+                </Button>
+              </div>
+            ) : (
+              <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 px-6">
+                <div className="h-20 w-20 bg-emerald-100 rounded-full flex items-center justify-center animate-bounce">
+                  <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-slate-800">Ativação Concluída!</h3>
+                  <p className="text-slate-500 mt-1">Sua senha foi atualizada com segurança.</p>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground px-1">Confirmar Nova Senha</Label>
-                <div className="relative">
-                  <Key className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-10 rounded-xl h-12 bg-slate-50 focus:bg-white transition-all"
-                    placeholder="Repita sua senha"
-                  />
-                </div>
-              </div>
-
-              <Button 
-                onClick={handleUpdate} 
-                disabled={loading}
-                className="w-full rounded-2xl h-12 bg-blue-600 hover:bg-blue-500 font-black shadow-lg shadow-blue-500/20 active:scale-95 transition-all text-white"
-              >
-                {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Ativar Minha Conta AGORA
-              </Button>
-            </div>
-          ) : (
-            <div className="py-12 flex flex-col items-center justify-center text-center space-y-4">
-              <div className="h-20 w-20 bg-emerald-100 rounded-full flex items-center justify-center animate-bounce">
-                <CheckCircle2 className="h-10 w-10 text-emerald-600" />
-              </div>
-              <div>
-                <h3 className="text-xl font-black text-slate-800">Ativação Concluída!</h3>
-                <p className="text-slate-500">Prepare-se para entrar na sua conta.</p>
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+            )}
+          </div>
+        </div>
+      )}
     </>
   )
 }
