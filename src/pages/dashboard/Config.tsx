@@ -180,7 +180,7 @@ export default function ConfigPage() {
       let uQuery = supabase.from('hospital_unidades').select('*').order('name')
       if (profile?.role !== 'gerente' && profile?.unidade_id) {
         uQuery = uQuery.eq('id', profile.unidade_id)
-        if (activeTab === 'empresa') setActiveTab('unidades')
+        if (activeTab === 'empresa' || activeTab === 'unidades') setActiveTab('setores')
       }
       const { data: uData } = await uQuery
       setUnidades(uData || [])
@@ -455,14 +455,16 @@ export default function ConfigPage() {
         </div>
       )}
 
-       <Tabs defaultValue="empresa" className="w-full max-w-full overflow-hidden">
-         <TabsList className="w-full bg-muted/20 p-1.5 rounded-2xl h-auto grid grid-cols-3 md:flex md:flex-wrap lg:flex-nowrap gap-1.5 border border-border/50 mb-6 md:mb-8 whitespace-normal shadow-inner">
+       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full max-w-full overflow-hidden">
+         <TabsList className="w-full bg-muted/20 p-1.5 rounded-2xl h-auto grid grid-cols-2 md:flex md:flex-wrap lg:flex-nowrap gap-1.5 border border-border/50 mb-6 md:mb-8 whitespace-normal shadow-inner">
           {isGerente && (
-            <TabsTrigger value="empresa" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Building className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Empresa</span></TabsTrigger>
+            <>
+              <TabsTrigger value="empresa" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Building className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Empresa</span></TabsTrigger>
+              <TabsTrigger value="unidades" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                <Hospital className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Unidades</span>
+              </TabsTrigger>
+            </>
           )}
-          <TabsTrigger value="unidades" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm">
-            <Hospital className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">{isGerente ? "Unidades" : "Minha Unidade"}</span>
-          </TabsTrigger>
           <TabsTrigger value="setores" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Layers className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Setores</span></TabsTrigger>
           <TabsTrigger value="publico" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Users className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Públicos</span></TabsTrigger>
           
