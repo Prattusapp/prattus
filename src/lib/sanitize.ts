@@ -29,7 +29,7 @@ export const sanitizeObject = <T extends Record<string, any>>(obj: T): T => {
       if (typeof val === 'string') {
         // @ts-ignore
         newObj[key] = sanitizeString(val);
-      } else if (val !== null && typeof val === 'object' && !Array.isArray(val) && !(val instanceof Date)) {
+      } else if (val !== null && typeof val === 'object' && !Array.isArray(val) && !((val as any) instanceof Date)) {
         // Objeto aninhado simples, faz recursão (opcional, mas bom ter)
         newObj[key] = sanitizeObject(val);
       }
