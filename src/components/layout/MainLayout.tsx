@@ -71,7 +71,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
   ]
 
   return (
-    <div className="flex min-h-screen max-w-[100vw] overflow-x-hidden bg-background font-sans transition-colors duration-300">
+    <div className="flex min-h-screen max-w-[100vw] overflow-x-auto bg-background font-sans transition-colors duration-300">
       {/* Desktop Sidebar */}
       <aside className="hidden w-72 flex-col border-r border-border bg-card/30 backdrop-blur-md lg:flex">
         <div className="flex h-24 items-center justify-center border-b border-border/50 px-6">
@@ -276,7 +276,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         )}
 
         {/* Page Content */}
-        <main className="flex-1 overflow-x-hidden p-4 md:p-6 lg:p-8">
+        <main className="flex-1 overflow-x-auto p-4 md:p-6 lg:p-8">
           <div className="mx-auto max-w-7xl">
             {children}
           </div>

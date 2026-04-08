@@ -307,8 +307,7 @@ export default function MealCountDetailed() {
         <Button onClick={handleSearch} disabled={searching} className="rounded-xl bg-blue-600 h-10 font-bold gap-2">{searching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />} Buscar</Button>
       </div>
 
-      <div className="w-full overflow-x-auto pb-4">
-        <div className="space-y-10 px-2 min-w-[210mm]" ref={printRef}>
+      <div className="space-y-10 px-2 min-w-[210mm]" ref={printRef}>
         {searching ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3"><Loader2 className="h-8 w-8 animate-spin text-blue-600" /><p className="font-bold text-muted-foreground">Cruzando dados...</p></div>
         ) : activeTypesToDisplay.map((type, idx) => {
@@ -338,7 +337,7 @@ export default function MealCountDetailed() {
                 <div className="h-0.5 bg-blue-600 w-full mb-4 bg-opacity-70"></div>
                 <p className="mb-6 font-bold text-slate-800 text-sm">Referência: {format(parseISO(startDate), "dd/MM/yyyy")} até {format(parseISO(endDate), "dd/MM/yyyy")}</p>
                 <div className="overflow-x-auto border border-slate-300 rounded-sm mb-10">
-                  <table className="w-full border-collapse">
+                  <table className="w-full border-collapse min-w-max">
                     <thead className="bg-[#2563eb] text-white uppercase font-bold text-[10px]">
                       <tr>
                         <th className="p-2.5 text-left border-r border-white/20 min-w-[150px]">Setor / Clínica</th>
@@ -376,7 +375,6 @@ export default function MealCountDetailed() {
               </div>
             )
           })}
-      </div>
       </div>
 
       <style>{`
