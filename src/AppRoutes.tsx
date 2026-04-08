@@ -135,7 +135,7 @@ export default function AppRoutes() {
           path="/config" 
           element={
             <ProtectedRoute>
-              <RoleGuard allowedRoles={['gerente', 'nutricionista']} fallbackPath="/dashboard">
+              <RoleGuard allowedRoles={['gerente', 'nutricionista', 'administrativo']} fallbackPath="/dashboard">
                 <MainLayout><ConfigPage /></MainLayout>
               </RoleGuard>
             </ProtectedRoute>
