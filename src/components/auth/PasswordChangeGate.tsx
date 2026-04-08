@@ -78,7 +78,7 @@ export function PasswordChangeGate({ children }: { children: React.ReactNode }) 
       
       {open && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-300">
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative">
             <div className="items-center text-center p-6 pb-2">
               <div className="h-16 w-16 bg-blue-100 rounded-full flex items-center justify-center mb-4 mx-auto">
                 <ShieldAlert className="h-8 w-8 text-blue-600" />
