@@ -10,7 +10,6 @@ import {
 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import { format, subDays, parseISO } from "date-fns"
 import { ptBR } from "date-fns/locale"
 

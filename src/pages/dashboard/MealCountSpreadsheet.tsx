@@ -8,9 +8,9 @@ import {
   CheckCircle2,
   AlertCircle,
   ChevronLeft,
-  ChevronRight,
-  ArrowRight
+  ChevronRight
 } from "lucide-react"
+import { format, parseISO } from "date-fns"
 import { cn } from "@/lib/utils"
 
 type MealType = 'desjejum' | 'almoco' | 'lanche_manha' | 'lanche_tarde' | 'jantar' | 'lanche_noite' | 'extras' | 'lactario'
@@ -65,7 +65,6 @@ export default function MealCountSpreadsheet() {
     { id: 'lactario', label: 'Lactário' },
   ]
 
-  const [company, setCompany] = useState<{ razao_social: string, logo_url: string } | null>(null)
 
   useEffect(() => {
     fetchInitialData()
@@ -92,7 +91,9 @@ export default function MealCountSpreadsheet() {
       }
 
       const { data: configData } = await supabase.from('hospital_config').select('razao_social, logo_url').single()
-      if (configData) setCompany(configData)
+      if (configData) {
+        // configData is available if needed in the future
+      }
 
       // Fetch Units
       const { data: uData } = await supabase.from('hospital_unidades').select('*').order('name')

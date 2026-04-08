@@ -1,14 +1,12 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
 import { 
   Milk, 
   Clock, 
   Baby, 
-  Search, 
   Plus, 
   MapPin,
-  CheckCircle2,
-  Timer
+  CheckCircle2
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 

@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react"
-import { Routes, Route, Navigate, useLocation } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { Routes, Route, Navigate } from "react-router-dom"
 import { supabase } from "@/lib/supabase"
 import Login from "@/pages/auth/Login"
 import Register from "@/pages/auth/Register"

@@ -7,10 +7,8 @@ import {
   Users, 
   Calendar,
   Filter,
-  ArrowUpRight,
-  ChevronRight,
   Activity,
-  Baby,
+  ChevronRight,
   FileDown,
   FileText
 } from "lucide-react"
@@ -18,8 +16,6 @@ import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 import * as XLSX from 'xlsx'
 import { 
-  BarChart, 
-  Bar, 
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -28,16 +24,13 @@ import {
   Cell,
   PieChart,
   Pie,
-  LineChart,
-  Line,
   AreaChart,
   Area
 } from "recharts"
 import { cn } from "@/lib/utils"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 
 const COLORS = ["#3b82f6", "#6366f1", "#8b5cf6", "#ec4899", "#f43f5e", "#f59e0b", "#10b981", "#06b6d4"]
 
@@ -252,7 +245,7 @@ export default function Financeiro() {
       setServiceData(Object.entries(serviceMap).map(([name, value]) => ({ name, value })))
       setPublicData(Object.entries(publicMap).map(([name, value]) => ({ name, value })))
       setDailyTrend(Object.entries(trendMap).sort().map(([date, value]) => {
-        const [year, month, day] = date.split('-')
+        const [, month, day] = date.split('-')
         return { 
           date: `${day}/${month}`, 
           value 
@@ -519,7 +512,7 @@ export default function Financeiro() {
                   width={75}
                 />
                 <Tooltip 
-                  formatter={(val: number) => [formatCurrency(val), "Faturamento"]}
+                  formatter={(val: any) => [formatCurrency(Number(val || 0)), "Faturamento"]}
                   contentStyle={{ 
                     backgroundColor: 'hsl(var(--card))', 
                     borderColor: 'hsl(var(--border))',
@@ -565,7 +558,7 @@ export default function Financeiro() {
                     className="cursor-pointer outline-none"
                   >
                     {serviceData.map((_entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} cornerRadius={4} strokeWidth={0} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeWidth={0} />
                     ))}
                   </Pie>
                   <Tooltip 
@@ -632,7 +625,7 @@ export default function Financeiro() {
         </div>
         
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {publicData.map((pub, idx) => {
+          {publicData.map((pub) => {
             const pType = publicTypes.find(p => p.name === pub.name)
             return (
               <Card 
