@@ -7,7 +7,7 @@ import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, endOfMonth 
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
 import { jsPDF } from "jspdf"
-import html2canvas from "html2canvas"
+import autoTable from "jspdf-autotable"
 
 export default function FaturamentoRelatorios() {
   const [loading, setLoading] = useState(true)
@@ -142,21 +142,97 @@ export default function FaturamentoRelatorios() {
   const handlePrevMonth = () => setCurrentDate(prev => subMonths(prev, 1))
   const handleNextMonth = () => setCurrentDate(prev => addMonths(prev, 1))
 
-  const handlePrint = async () => {
-    const element = document.getElementById('print-area')
-    if (!element) return
-
+  const handlePrint = () => {
     setGeneratingPDF(true)
     try {
-      const canvas = await html2canvas(element, { scale: 2, useCORS: true })
-      const imgData = canvas.toDataURL('image/png')
-      
-      const pdf = new jsPDF('l', 'mm', 'a4') // Formato paisagem (landscape)
-      const pdfWidth = pdf.internal.pageSize.getWidth()
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+      const margin = 15
+      let currentY = 15
 
-      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight)
-      pdf.save(`Relatorio_Faturamento_${format(currentDate, 'MM-yyyy')}.pdf`)
+      // Cabeçalho
+      doc.setFontSize(14).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
+      doc.text("RELATÓRIO DE FATURAMENTO", 148.5, currentY, { align: 'center' })
+      currentY += 8
+      doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(37, 99, 235)
+      doc.text(`TIPO: ${reportType.toUpperCase()} | MÊS: ${format(currentDate, 'MMMM yyyy', { locale: ptBR }).toUpperCase()}`, 148.5, currentY, { align: 'center' })
+      currentY += 15
+
+      // 1. Tabela Detalhamento Diário
+      doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
+      doc.text("DETALHAMENTO DIÁRIO", margin, currentY)
+      currentY += 5
+
+      const dailyHead = [['Refeições', ...daysArray.map(String), 'Total']]
+      const dailyBody = services.map(s => {
+        let rowTotal = 0
+        const rowData = daysArray.map(day => {
+          const val = records[s.id]?.[day] || 0
+          rowTotal += val
+          return val > 0 ? val.toString() : '-'
+        })
+        return [s.name, ...rowData, rowTotal > 0 ? rowTotal.toString() : '-']
+      })
+
+      autoTable(doc, {
+        startY: currentY,
+        head: dailyHead,
+        body: dailyBody,
+        margin: { left: margin, right: margin },
+        theme: 'grid',
+        headStyles: { fillColor: [37, 99, 235], fontSize: 7, halign: 'center' },
+        styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', textColor: [0, 0, 0] },
+        columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+      })
+
+      currentY = (doc as any).lastAutoTable.finalY + 15
+
+      // 2. Tabela Resumo (Valores)
+      // Checar se precisa de nova página
+      if (currentY > 150) {
+         doc.addPage()
+         currentY = 15
+      }
+
+      doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
+      doc.text("QUADRO RESUMO (VALORES)", margin, currentY)
+      currentY += 5
+
+      const resumeHead = [['CÓDIGOS', 'REFEIÇÕES', 'QUANTIDADE ESTIMADA', 'VALOR UNITÁRIO R$', 'VALOR TOTAL R$']]
+      let grandTotalPDF = 0
+      const resumeBody = services.map(s => {
+        let estimatedQty = 0
+        daysArray.forEach(day => estimatedQty += (records[s.id]?.[day] || 0))
+        const unitPrice = getPriceForService(s.name)
+        const totalValue = estimatedQty * unitPrice
+        grandTotalPDF += totalValue
+        return [
+          s.code || '-',
+          s.name.toUpperCase(),
+          estimatedQty > 0 ? estimatedQty.toLocaleString('pt-BR') : '-',
+          unitPrice > 0 ? formatCurrency(unitPrice) : '-',
+          totalValue > 0 ? formatCurrency(totalValue) : '-'
+        ]
+      })
+      resumeBody.push(['', 'TOTAL GERAL', '', '', formatCurrency(grandTotalPDF)])
+
+      autoTable(doc, {
+        startY: currentY,
+        head: resumeHead,
+        body: resumeBody,
+        margin: { left: margin, right: margin },
+        theme: 'grid',
+        headStyles: { fillColor: [16, 185, 129], fontSize: 8, halign: 'center' }, // emerald-500
+        styles: { fontSize: 8, cellPadding: 2, halign: 'center', textColor: [0, 0, 0] },
+        columnStyles: { 1: { halign: 'left', fontStyle: 'bold' }, 4: { halign: 'right', fontStyle: 'bold' } },
+        didParseCell: (data) => {
+          if (data.row.index === resumeBody.length - 1 && data.section === 'body') {
+            data.cell.styles.fillColor = [209, 250, 229] // emerald-100
+            data.cell.styles.fontStyle = 'bold'
+          }
+        }
+      })
+
+      doc.save(`Relatorio_Faturamento_${format(currentDate, 'MM-yyyy')}.pdf`)
     } catch (err: any) {
       console.error(err)
       alert("Erro ao gerar PDF: " + (err.message || String(err)))
