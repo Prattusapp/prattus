@@ -19,7 +19,8 @@ import {
   Layers,
   DollarSign,
   Phone,
-  Hospital
+  Hospital,
+  Briefcase
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -123,6 +124,11 @@ export default function ConfigPage() {
   const [editingPublic, setEditingPublic] = useState<any>(null)
   const [publicData, setPublicData] = useState({ name: "", unidade_id: "", active: true })
 
+  const [services, setServices] = useState<any[]>([])
+  const [serviceDialogOpen, setServiceDialogOpen] = useState(false)
+  const [editingService, setEditingService] = useState<any>(null)
+  const [serviceData, setServiceData] = useState({ name: "", code: "" })
+
   const [unidades, setUnidades] = useState<any[]>([])
   const [unitDialogOpen, setUnitDialogOpen] = useState(false)
   const [editingUnit, setEditingUnit] = useState<any>(null)
@@ -199,6 +205,10 @@ export default function ConfigPage() {
       }
       const { data: pData } = await pQuery
       setPublicTypes(pData || [])
+
+      // 6. Serviços
+      const { data: servData } = await supabase.from('hospital_servicos').select('*').order('name')
+      setServices(servData || [])
 
       if (profile?.role === 'gerente') fetchUsers()
     } catch (err) {
@@ -462,6 +472,7 @@ export default function ConfigPage() {
           </TabsTrigger>
           <TabsTrigger value="setores" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Layers className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Setores</span></TabsTrigger>
           <TabsTrigger value="publico" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Users className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Públicos</span></TabsTrigger>
+          <TabsTrigger value="servicos" className="rounded-xl flex items-center justify-center gap-2 py-2.5 px-2 font-bold transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"><Briefcase className="h-3.5 w-3.5" /> <span className="text-[10px] sm:text-xs">Serviços</span></TabsTrigger>
           
           {isGerente && (
             <>
@@ -816,6 +827,71 @@ export default function ConfigPage() {
           </Card>
         </TabsContent>
 
+        {/* Tab: Serviços */}
+        <TabsContent value="servicos">
+          <Card className="rounded-3xl border-border/50 shadow-xl overflow-hidden">
+            <CardHeader className="bg-muted/30 border-b border-border/50 p-4 md:pb-8 md:pt-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
+               <div>
+                 <CardTitle className="text-xl md:text-2xl font-black flex items-center gap-3"><Briefcase className="h-6 w-6 text-blue-600" /> Serviços</CardTitle>
+                 <CardDescription className="text-xs md:text-sm">Gerencie os serviços oferecidos e seus códigos.</CardDescription>
+               </div>
+               <Button onClick={() => { setEditingService(null); setServiceData({ name: "", code: "" }); setServiceDialogOpen(true); }} className="w-full md:w-auto rounded-xl bg-blue-600 hover:bg-blue-500 font-bold h-11 px-6 shadow-lg shadow-blue-500/20">
+                 <Plus className="h-4 w-4 mr-2" /> Novo Serviço
+               </Button>
+            </CardHeader>
+             <CardContent className="p-0">
+                {/* Mobile: Lista de Cards */}
+                <div className="md:hidden space-y-3 p-4 bg-muted/10">
+                  {services.length === 0 ? (
+                    <div className="text-center py-10 text-muted-foreground text-xs font-bold uppercase tracking-widest">Nenhum serviço cadastrado.</div>
+                  ) : services.map((s) => (
+                    <div key={s.id} className="bg-card border border-border/50 rounded-2xl p-4 shadow-sm space-y-4">
+                      <div className="flex justify-between items-start gap-4">
+                        <div className="space-y-1">
+                          <h4 className="font-black text-sm text-slate-800 leading-tight uppercase">{s.name}</h4>
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-blue-600">Cód: {s.code}</span>
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                           <Button variant="ghost" size="icon" className="h-9 w-9 bg-muted/30 rounded-xl" onClick={() => { setEditingService(s); setServiceData({ name: s.name, code: s.code }); setServiceDialogOpen(true); }}><Pencil className="h-4 w-4 text-blue-600" /></Button>
+                           <Button variant="ghost" size="icon" className="h-9 w-9 bg-rose-50 rounded-xl" onClick={async () => { if(confirm("Apagar?")) { await supabase.from('hospital_servicos').delete().eq('id', s.id); fetchData(); } }}><Trash2 className="h-4 w-4 text-rose-600" /></Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop: Tabela */}
+                <div className="hidden md:block">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="pl-8 py-4 font-black text-xs uppercase tracking-widest text-[10px]">Nome do Serviço</TableHead>
+                        <TableHead className="font-black text-xs uppercase tracking-widest text-[10px]">Código</TableHead>
+                        <TableHead className="w-[100px] text-right pr-8 font-black text-xs uppercase tracking-widest text-[10px]">Ações</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {services.map((s) => (
+                        <TableRow key={s.id} className="hover:bg-muted/20">
+                          <TableCell className="font-bold pl-8 py-4">{s.name}</TableCell>
+                          <TableCell className="text-blue-600 font-mono font-bold">{s.code}</TableCell>
+                          <TableCell className="text-right pr-8">
+                            <div className="flex items-center justify-end gap-2">
+                               <Button variant="ghost" size="icon" onClick={() => { setEditingService(s); setServiceData({ name: s.name, code: s.code }); setServiceDialogOpen(true); }}><Pencil className="h-4 w-4" /></Button>
+                               <Button variant="ghost" size="icon" className="text-rose-600" onClick={async () => { if(confirm("Apagar?")) { await supabase.from('hospital_servicos').delete().eq('id', s.id); fetchData(); } }}><Trash2 className="h-4 w-4" /></Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+             </CardContent>
+          </Card>
+        </TabsContent>
+
         {/* Tab: Gestão de Preços */}
         <TabsContent value="precos">
           <Card className="rounded-3xl border-border/50 shadow-xl overflow-hidden">
@@ -1095,6 +1171,27 @@ export default function ConfigPage() {
              </div>
            </div>
            <DialogFooter><Button onClick={savePublic} disabled={loading} className="rounded-xl bg-blue-600 font-bold">Salvar Público</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Serviço Modal */}
+      <Dialog open={serviceDialogOpen} onOpenChange={setServiceDialogOpen}>
+        <DialogContent className="rounded-3xl max-w-md">
+           <DialogHeader>
+             <DialogTitle className="text-2xl font-black">Serviço</DialogTitle>
+             <CardDescription>Cadastre o nome e o código do serviço.</CardDescription>
+           </DialogHeader>
+           <div className="space-y-4 py-4">
+             <div className="space-y-2">
+                <Label>Nome do Serviço</Label>
+                <Input value={serviceData.name} onChange={(e) => setServiceData({...serviceData, name: e.target.value})} className="rounded-xl h-11" placeholder="Ex: Higienização..." />
+             </div>
+             <div className="space-y-2">
+                <Label>Código</Label>
+                <Input value={serviceData.code} onChange={(e) => setServiceData({...serviceData, code: e.target.value})} className="rounded-xl h-11 font-mono uppercase" placeholder="Ex: SRV-01" />
+             </div>
+           </div>
+           <DialogFooter><Button onClick={saveService} disabled={loading} className="rounded-xl bg-blue-600 font-bold">Salvar Serviço</Button></DialogFooter>
         </DialogContent>
       </Dialog>
 
