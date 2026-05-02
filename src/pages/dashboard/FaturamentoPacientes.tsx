@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
 import { FileText, Loader2, ChevronLeft, ChevronRight, Save } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, endOfMonth } from "date-fns"
 import { ptBR } from "date-fns/locale"
-import { useToast } from "@/components/ui/use-toast"
 import { cn } from "@/lib/utils"
 
 export default function FaturamentoPacientes() {
@@ -22,8 +20,6 @@ export default function FaturamentoPacientes() {
   
   // records: { [service_id]: { [day]: number } }
   const [records, setRecords] = useState<Record<string, Record<number, string>>>({})
-
-  const { toast } = useToast()
 
   useEffect(() => {
     fetchInitialData()
@@ -146,11 +142,7 @@ export default function FaturamentoPacientes() {
       if (error) throw error
     } catch (err) {
       console.error(err)
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar o valor automaticamente.",
-        variant: "destructive"
-      })
+      alert("Não foi possível salvar o valor automaticamente. Verifique sua conexão.")
     } finally {
       setSaving(false)
     }
