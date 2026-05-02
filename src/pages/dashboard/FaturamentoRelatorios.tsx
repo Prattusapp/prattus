@@ -45,7 +45,26 @@ export default function FaturamentoRelatorios() {
 
       // Buscar Servicos
       const { data: servs } = await supabase.from('hospital_servicos').select('*').order('name')
-      setServices(servs || [])
+      
+      const orderMap: Record<string, number> = {
+        'desjejum': 1,
+        'lanche manhã': 2,
+        'lanche da manhã': 2,
+        'almoço': 3,
+        'lanche tarde': 4,
+        'lanche da tarde': 4,
+        'jantar': 5,
+        'lanche noite': 6,
+        'ceia': 6
+      }
+      
+      const sortedServs = (servs || []).sort((a, b) => {
+        const orderA = orderMap[a.name.toLowerCase()] || 99
+        const orderB = orderMap[b.name.toLowerCase()] || 99
+        return orderA - orderB
+      })
+
+      setServices(sortedServs)
 
       // Buscar Preços (hospital_config)
       const { data: config } = await supabase.from('hospital_config').select('*').single()

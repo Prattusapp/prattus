@@ -37,10 +37,17 @@ export default function FaturamentoPacientes() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: profile } = await supabase.from('profiles').select('institution_id').eq('id', user.id).single()
-      if (!profile?.institution_id) return
+      const { data: profile } = await supabase.from('profiles').select('institution_id, unidade_id').eq('id', user.id).single()
+      let currentInstId = profile?.institution_id
+      
+      if (!currentInstId && profile?.unidade_id) {
+         const { data: unit } = await supabase.from('hospital_unidades').select('institution_id').eq('id', profile.unidade_id).single()
+         if (unit?.institution_id) currentInstId = unit.institution_id
+      }
+      
+      if (!currentInstId) return
 
-      setInstitutionId(profile.institution_id)
+      setInstitutionId(currentInstId)
 
       const { data: servs, error: servsError } = await supabase
         .from('hospital_servicos')
@@ -49,7 +56,26 @@ export default function FaturamentoPacientes() {
         
       if (servsError) throw servsError
 
-      setServices(servs || [])
+      // Ordenar os serviços na ordem solicitada
+      const orderMap: Record<string, number> = {
+        'desjejum': 1,
+        'lanche manhã': 2,
+        'lanche da manhã': 2,
+        'almoço': 3,
+        'lanche tarde': 4,
+        'lanche da tarde': 4,
+        'jantar': 5,
+        'lanche noite': 6,
+        'ceia': 6
+      }
+      
+      const sortedServs = (servs || []).sort((a, b) => {
+        const orderA = orderMap[a.name.toLowerCase()] || 99
+        const orderB = orderMap[b.name.toLowerCase()] || 99
+        return orderA - orderB
+      })
+
+      setServices(sortedServs)
       if (servs && servs.length > 0) {
         setActiveTab(servs[0].id)
       }
@@ -153,7 +179,7 @@ export default function FaturamentoPacientes() {
       for (let day = 1; day <= daysInMonth; day++) {
         const rawValue = records[serviceId]?.[day]
         if (rawValue !== undefined && rawValue !== '') {
-           let numericValue = parseFloat(rawValue.replace(',', '.'))
+           let numericValue = parseFloat(String(rawValue).replace(',', '.'))
            if (!isNaN(numericValue)) {
               const dateStr = format(new Date(currentDate.getFullYear(), currentDate.getMonth(), day), 'yyyy-MM-dd')
               recordsToUpsert.push({
