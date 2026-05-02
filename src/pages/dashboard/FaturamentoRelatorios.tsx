@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button"
 import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, endOfMonth } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
-import jsPDF from "jspdf"
+import { jsPDF } from "jspdf"
 import html2canvas from "html2canvas"
 
 export default function FaturamentoRelatorios() {
@@ -157,9 +157,9 @@ export default function FaturamentoRelatorios() {
 
       pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight)
       pdf.save(`Relatorio_Faturamento_${format(currentDate, 'MM-yyyy')}.pdf`)
-    } catch (err) {
+    } catch (err: any) {
       console.error(err)
-      alert("Erro ao gerar PDF")
+      alert("Erro ao gerar PDF: " + (err.message || String(err)))
     } finally {
       setGeneratingPDF(false)
     }
