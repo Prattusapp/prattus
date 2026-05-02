@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { supabase } from "@/lib/supabase"
-import { FileText, Loader2, ChevronLeft, ChevronRight, Save } from "lucide-react"
+import { FileText, Loader2, ChevronLeft, ChevronRight, Save, CheckCircle2 } from "lucide-react"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -144,6 +144,43 @@ export default function FaturamentoPacientes() {
     }
   }
 
+  const handleBulkSaveTab = async (serviceId: string) => {
+    if (!institutionId) return
+    setSaving(true)
+    try {
+      const recordsToUpsert = []
+      const daysInMonth = getDaysInMonth(currentDate)
+      for (let day = 1; day <= daysInMonth; day++) {
+        const rawValue = records[serviceId]?.[day]
+        if (rawValue !== undefined && rawValue !== '') {
+           let numericValue = parseFloat(rawValue.replace(',', '.'))
+           if (!isNaN(numericValue)) {
+              const dateStr = format(new Date(currentDate.getFullYear(), currentDate.getMonth(), day), 'yyyy-MM-dd')
+              recordsToUpsert.push({
+                 institution_id: institutionId,
+                 service_id: serviceId,
+                 date: dateStr,
+                 value: numericValue
+              })
+           }
+        }
+      }
+
+      if (recordsToUpsert.length > 0) {
+        const { error } = await supabase
+          .from('faturamento_pacientes')
+          .upsert(recordsToUpsert, { onConflict: 'institution_id, service_id, date' })
+
+        if (error) throw error
+      }
+    } catch (err) {
+      console.error(err)
+      alert("Erro ao salvar dados desta aba. Verifique sua conexão.")
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const daysInMonth = getDaysInMonth(currentDate)
   const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
 
@@ -202,7 +239,7 @@ export default function FaturamentoPacientes() {
                 </TabsList>
               </div>
 
-              {services.map(s => (
+              {services.map((s, index) => (
                 <TabsContent key={s.id} value={s.id} className="p-0 m-0 focus-visible:outline-none">
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-0 border-t border-border/50">
                      {daysArray.map(day => {
@@ -230,7 +267,34 @@ export default function FaturamentoPacientes() {
                           </div>
                         )
                      })}
-                     {/* Fill empty cells to make the grid look complete if necessary, but grid auto-flows anyway */}
+                  </div>
+                  <div className="p-4 md:p-6 border-t border-border/50 bg-muted/10 flex justify-end">
+                    <Button 
+                      size="lg"
+                      disabled={saving}
+                      onClick={async () => {
+                         await handleBulkSaveTab(s.id)
+                         const isLast = index === services.length - 1
+                         if (!isLast) {
+                            setActiveTab(services[index + 1].id)
+                            window.scrollTo({ top: 0, behavior: 'smooth' })
+                         } else {
+                            alert("Todos os dados do mês foram salvos com sucesso!")
+                         }
+                      }}
+                      className={cn(
+                        "rounded-xl px-8 shadow-md transition-all font-bold",
+                        index === services.length - 1 ? "bg-emerald-600 hover:bg-emerald-700 text-white" : "bg-blue-600 hover:bg-blue-700 text-white"
+                      )}
+                    >
+                      {saving ? (
+                        <><Loader2 className="w-5 h-5 mr-2 animate-spin" /> Salvando...</>
+                      ) : index === services.length - 1 ? (
+                        <><CheckCircle2 className="w-5 h-5 mr-2" /> Finalizar e Salvar</>
+                      ) : (
+                        <>Salvar e Próximo Serviço <ChevronRight className="w-5 h-5 ml-2" /></>
+                      )}
+                    </Button>
                   </div>
                 </TabsContent>
               ))}
