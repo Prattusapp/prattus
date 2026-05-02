@@ -404,6 +404,29 @@ export default function ConfigPage() {
     }
   }
 
+  const saveService = async () => {
+    if (!institutionId) {
+      setMsg({ type: 'error', text: "Salve os dados da Empresa primeiro!" })
+      return
+    }
+
+    setLoading(true)
+    try {
+      const { error } = editingService
+        ? await supabase.from('hospital_servicos').update({ ...serviceData }).eq('id', editingService.id)
+        : await supabase.from('hospital_servicos').insert({ ...serviceData, institution_id: institutionId })
+      
+      if (error) throw error
+      setServiceDialogOpen(false)
+      fetchData()
+      setMsg({ type: 'success', text: "Serviço salvo!" })
+    } catch (err: any) {
+      setMsg({ type: 'error', text: err.message })
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const saveUser = async () => {
     setUserError(null)
     if (!userData.email || !userData.full_name || (!editingUser && !userData.password)) {
