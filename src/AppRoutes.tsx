@@ -18,6 +18,8 @@ import OnboardingPage from "@/pages/onboarding/OnboardingPage"
 import Financeiro from "@/pages/dashboard/Financeiro"
 import { PasswordChangeGate } from "@/components/auth/PasswordChangeGate"
 import { RoleGuard } from "@/components/auth/RoleGuard"
+import FaturamentoPacientes from "@/pages/dashboard/FaturamentoPacientes"
+import FaturamentoServidores from "@/pages/dashboard/FaturamentoServidores"
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null)
@@ -158,6 +160,24 @@ export default function AppRoutes() {
               <RoleGuard allowedRoles={['gerente']}>
                 <MainLayout><Financeiro /></MainLayout>
               </RoleGuard>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/faturamento/pacientes" 
+          element={
+            <ProtectedRoute>
+              <MainLayout><FaturamentoPacientes /></MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/faturamento/servidores" 
+          element={
+            <ProtectedRoute>
+              <MainLayout><FaturamentoServidores /></MainLayout>
             </ProtectedRoute>
           } 
         />

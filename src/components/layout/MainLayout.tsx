@@ -9,7 +9,8 @@ import {
   X,
   ChevronRight,
   User,
-  TrendingUp
+  TrendingUp,
+  FileText
 } from "lucide-react"
 import { ThemeToggle } from "./ThemeToggle"
 import { supabase } from "@/lib/supabase"
@@ -19,6 +20,7 @@ import { cn } from "@/lib/utils"
 export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [contagemOpen, setContagemOpen] = useState(true)
+  const [faturamentoOpen, setFaturamentoOpen] = useState(false)
   const location = useLocation()
 
   const [profile, setProfile] = useState<{ full_name: string, role: string } | null>(null)
@@ -62,10 +64,14 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         { label: "Relatório Analítico", href: "/contagem/relatorios/analitico" },
       ]
     },
-    /* 
-    { label: "Extras", href: "/extras", icon: PlusCircle },
-    { label: "Lactário", href: "/lactario", icon: Baby }, 
-    */
+    {
+      label: "Faturamento",
+      icon: FileText,
+      subItems: [
+        { label: "Pacientes", href: "/faturamento/pacientes" },
+        { label: "Servidores/Acompanhantes", href: "/faturamento/servidores" }
+      ]
+    },
     ...(profile?.role === 'gerente' ? [{ label: "Financeiro", href: "/financeiro", icon: TrendingUp }] : []),
     { label: "Configurações", href: "/config", icon: Settings },
   ]
@@ -83,14 +89,19 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
         <nav className="flex-1 space-y-1 p-4">
           {navItems.map((item) => {
             const Icon = item.icon
-            const isContagem = item.label === "Contagem"
+            const hasSubItems = !!item.subItems
+            const isOpen = item.label === "Contagem" ? contagemOpen : (item.label === "Faturamento" ? faturamentoOpen : false)
+            const toggleOpen = () => {
+               if (item.label === "Contagem") setContagemOpen(!contagemOpen)
+               if (item.label === "Faturamento") setFaturamentoOpen(!faturamentoOpen)
+            }
             
-            if (isContagem && item.subItems) {
+            if (hasSubItems && item.subItems) {
               const anyActive = item.subItems.some(sub => location.pathname === sub.href)
               return (
                 <div key={item.label} className="space-y-1">
                   <button
-                    onClick={() => setContagemOpen(!contagemOpen)}
+                    onClick={toggleOpen}
                     className={cn(
                       "w-full group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all text-muted-foreground hover:bg-muted hover:text-foreground outline-none",
                       anyActive && "bg-blue-600/5 text-blue-600"
@@ -100,10 +111,10 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
                       <Icon className={cn("h-5 w-5 transition-transform group-hover:scale-110", anyActive && "text-blue-600")} />
                       {item.label}
                     </div>
-                    <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", contagemOpen && "rotate-90")} />
+                    <ChevronRight className={cn("h-4 w-4 transition-transform duration-300", isOpen && "rotate-90")} />
                   </button>
                   
-                  {contagemOpen && (
+                  {isOpen && (
                     <div className="pl-12 space-y-1 animate-in slide-in-from-top-2 duration-300">
                       {item.subItems.map(sub => {
                         const subActive = location.pathname === sub.href
@@ -209,9 +220,9 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
               <nav className="space-y-2">
                 {navItems.map((item) => {
                   const Icon = item.icon
-                  const isContagem = item.label === "Contagem"
+                  const hasSubItems = !!item.subItems
                   
-                  if (isContagem && item.subItems) {
+                  if (hasSubItems && item.subItems) {
                     return (
                       <div key={item.label} className="space-y-1">
                         <div className="flex items-center gap-4 rounded-xl px-4 py-3 text-base font-semibold text-muted-foreground bg-muted/20">
