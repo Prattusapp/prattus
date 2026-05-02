@@ -282,11 +282,24 @@ export default function FaturamentoPacientes() {
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase">{format(dateObj, 'eee', { locale: ptBR })}</span>
                              </div>
                              <Input 
+                               id={`input-${s.id}-${day}`}
                                type="text"
                                inputMode="decimal"
                                value={value}
                                onChange={(e) => handleValueChange(s.id, day, e.target.value)}
                                onBlur={(e) => handleValueBlur(s.id, day, e.target.value)}
+                               onKeyDown={(e) => {
+                                 if (e.key === 'Enter') {
+                                   e.preventDefault()
+                                   const nextInput = document.getElementById(`input-${s.id}-${day + 1}`)
+                                   if (nextInput) {
+                                     nextInput.focus()
+                                   } else {
+                                     // If it's the last day, blur the current input to save it
+                                     e.currentTarget.blur()
+                                   }
+                                 }
+                               }}
                                className="rounded-xl h-12 text-center font-black text-lg focus-visible:ring-blue-600 transition-all border-slate-200 shadow-inner bg-slate-50/50"
                                placeholder="-"
                              />
