@@ -471,6 +471,16 @@ export default function ConfigPage() {
       setLoading(false)
     }
   }
+  const getServiceDisplay = (defaultName: string) => {
+    const normalizedDefault = defaultName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim()
+    const service = services.find(s => 
+      s.name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim() === normalizedDefault
+    )
+    if (service) {
+      return service.code ? `${service.name} - Cód: ${service.code}` : service.name
+    }
+    return defaultName
+  }
 
   return (
     <div className="w-full max-w-full overflow-x-hidden space-y-6 animate-in fade-in duration-500 pb-10 px-4 md:px-0">
@@ -928,7 +938,7 @@ export default function ConfigPage() {
                   <h3 className="font-bold text-lg text-blue-700 flex items-center gap-2">Refeições Principais</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">Desjejum</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">{getServiceDisplay("Desjejum")}</Label>
                       <Input 
                         value={maskCurrency(company.price_desjejum)} 
                         onChange={(e) => setCompany({...company, price_desjejum: parseCurrency(e.target.value)})}
@@ -936,7 +946,7 @@ export default function ConfigPage() {
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">Lanche Manhã</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">{getServiceDisplay("Lanche Manhã")}</Label>
                       <Input 
                         value={maskCurrency(company.price_lanche_manha)} 
                         onChange={(e) => setCompany({...company, price_lanche_manha: parseCurrency(e.target.value)})}
@@ -944,7 +954,7 @@ export default function ConfigPage() {
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">Almoço</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">{getServiceDisplay("Almoço")}</Label>
                       <Input 
                         value={maskCurrency(company.price_almoco)} 
                         onChange={(e) => setCompany({...company, price_almoco: parseCurrency(e.target.value)})}
@@ -952,7 +962,7 @@ export default function ConfigPage() {
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">Lanche Tarde</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">{getServiceDisplay("Lanche Tarde")}</Label>
                       <Input 
                         value={maskCurrency(company.price_lanche_tarde)} 
                         onChange={(e) => setCompany({...company, price_lanche_tarde: parseCurrency(e.target.value)})}
@@ -966,7 +976,7 @@ export default function ConfigPage() {
                   <h3 className="font-bold text-lg text-blue-700 flex items-center gap-2">Noite e Serviços Especiais</h3>
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">Jantar</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">{getServiceDisplay("Jantar")}</Label>
                       <Input 
                         value={maskCurrency(company.price_jantar)} 
                         onChange={(e) => setCompany({...company, price_jantar: parseCurrency(e.target.value)})}
@@ -974,7 +984,7 @@ export default function ConfigPage() {
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">Lanche Noite</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-muted-foreground sm:text-foreground">{getServiceDisplay("Lanche Noite")}</Label>
                       <Input 
                         value={maskCurrency(company.price_lanche_noite)} 
                         onChange={(e) => setCompany({...company, price_lanche_noite: parseCurrency(e.target.value)})}
@@ -982,7 +992,7 @@ export default function ConfigPage() {
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-emerald-600 sm:text-emerald-700">Extras (Dieta)</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-emerald-600 sm:text-emerald-700">{getServiceDisplay("Extras (Dieta)")}</Label>
                       <Input 
                         value={maskCurrency(company.price_extras)} 
                         onChange={(e) => setCompany({...company, price_extras: parseCurrency(e.target.value)})}
@@ -990,7 +1000,7 @@ export default function ConfigPage() {
                       />
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr,120px] items-center gap-2 sm:gap-4">
-                      <Label className="font-bold text-xs uppercase tracking-widest text-amber-600 sm:text-amber-700">Lactário</Label>
+                      <Label className="font-bold text-xs uppercase tracking-widest text-amber-600 sm:text-amber-700">{getServiceDisplay("Lactário")}</Label>
                       <Input 
                         value={maskCurrency(company.price_lactario)} 
                         onChange={(e) => setCompany({...company, price_lactario: parseCurrency(e.target.value)})}
