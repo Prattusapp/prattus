@@ -20,7 +20,7 @@ import { PasswordChangeGate } from "@/components/auth/PasswordChangeGate"
 import { RoleGuard } from "@/components/auth/RoleGuard"
 import FaturamentoPacientes from "@/pages/dashboard/FaturamentoPacientes"
 import FaturamentoServidores from "@/pages/dashboard/FaturamentoServidores"
-
+import FaturamentoRelatorios from "@/pages/dashboard/FaturamentoRelatorios"
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -178,6 +178,15 @@ export default function AppRoutes() {
           element={
             <ProtectedRoute>
               <MainLayout><FaturamentoServidores /></MainLayout>
+            </ProtectedRoute>
+          } 
+        />
+
+        <Route 
+          path="/faturamento/relatorios" 
+          element={
+            <ProtectedRoute>
+              <MainLayout><FaturamentoRelatorios /></MainLayout>
             </ProtectedRoute>
           } 
         />

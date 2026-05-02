@@ -69,7 +69,8 @@ export const MainLayout: React.FC<{ children: React.ReactNode }> = ({ children }
       icon: FileText,
       subItems: [
         { label: "Pacientes", href: "/faturamento/pacientes" },
-        { label: "Servidores/Acompanhantes", href: "/faturamento/servidores" }
+        { label: "Servidores/Acompanhantes", href: "/faturamento/servidores" },
+        { label: "Relatórios", href: "/faturamento/relatorios" }
       ]
     },
     ...(profile?.role === 'gerente' ? [{ label: "Financeiro", href: "/financeiro", icon: TrendingUp }] : []),
