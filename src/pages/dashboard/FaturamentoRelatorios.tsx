@@ -19,8 +19,8 @@ export default function FaturamentoRelatorios() {
   const [services, setServices] = useState<any[]>([])
   const [company, setCompany] = useState<any>(null)
   
-  // records: { [service_id]: { [day]: number } }
-  const [records, setRecords] = useState<Record<string, Record<number, number>>>({})
+  const [recordsPacientes, setRecordsPacientes] = useState<Record<string, Record<number, number>>>({})
+  const [recordsServidores, setRecordsServidores] = useState<Record<string, Record<number, number>>>({})
 
   useEffect(() => {
     fetchInitialData()
@@ -88,9 +88,11 @@ export default function FaturamentoRelatorios() {
     const end = endOfMonth(date).toISOString().split('T')[0]
 
     try {
-      const newRecords: Record<string, Record<number, number>> = {}
+      const newPacientes: Record<string, Record<number, number>> = {}
+      const newServidores: Record<string, Record<number, number>> = {}
       services.forEach(s => {
-        newRecords[s.id] = {}
+        newPacientes[s.id] = {}
+        newServidores[s.id] = {}
       })
 
       if (reportType === 'pacientes' || reportType === 'todos') {
@@ -105,15 +107,36 @@ export default function FaturamentoRelatorios() {
            dataPac.forEach(item => {
              const itemDate = new Date(item.date + 'T12:00:00Z')
              const day = itemDate.getUTCDate()
-             if (!newRecords[item.service_id]) newRecords[item.service_id] = {}
-             newRecords[item.service_id][day] = (newRecords[item.service_id][day] || 0) + Number(item.value)
+             if (!newPacientes[item.service_id]) newPacientes[item.service_id] = {}
+             newPacientes[item.service_id][day] = (newPacientes[item.service_id][day] || 0) + Number(item.value)
            })
          }
       }
       
-      // Quando existir a faturamento_servidores, adicionar o fetch aqui e somar no newRecords
+      if (reportType === 'servidores' || reportType === 'todos') {
+         try {
+           const { data: dataServ } = await supabase
+             .from('faturamento_servidores')
+             .select('*')
+             .eq('institution_id', institutionId)
+             .gte('date', start)
+             .lte('date', end)
 
-      setRecords(newRecords)
+           if (dataServ) {
+             dataServ.forEach(item => {
+               const itemDate = new Date(item.date + 'T12:00:00Z')
+               const day = itemDate.getUTCDate()
+               if (!newServidores[item.service_id]) newServidores[item.service_id] = {}
+               newServidores[item.service_id][day] = (newServidores[item.service_id][day] || 0) + Number(item.value)
+             })
+           }
+         } catch (e) {
+           console.log("Tabela faturamento_servidores ainda nao existe", e)
+         }
+      }
+
+      setRecordsPacientes(newPacientes)
+      setRecordsServidores(newServidores)
     } catch (err) {
       console.error(err)
     } finally {
@@ -142,6 +165,35 @@ export default function FaturamentoRelatorios() {
   const handlePrevMonth = () => setCurrentDate(prev => subMonths(prev, 1))
   const handleNextMonth = () => setCurrentDate(prev => addMonths(prev, 1))
 
+  const daysInMonth = getDaysInMonth(currentDate)
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
+
+  // Determinar os grupos baseados no reportType
+  const renderGroups = []
+  
+  if (reportType === 'pacientes' || reportType === 'todos') {
+    renderGroups.push({
+      id: 'pacientes',
+      title: 'PACIENTES',
+      records: recordsPacientes,
+      services: services
+    })
+  }
+
+  if (reportType === 'servidores' || reportType === 'todos') {
+    const servServices = services.filter(s => {
+      const n = s.name.toLowerCase()
+      return n.includes('desjejum') || n.includes('almoço') || n.includes('almoco') || n.includes('jantar')
+    })
+    
+    renderGroups.push({
+      id: 'servidores',
+      title: 'SERVIDORES E ACOMPANHANTES',
+      records: recordsServidores,
+      services: servServices
+    })
+  }
+
   const handlePrint = () => {
     setGeneratingPDF(true)
     try {
@@ -149,7 +201,7 @@ export default function FaturamentoRelatorios() {
       const margin = 15
       let currentY = 15
 
-      // Cabeçalho
+      // Cabeçalho Principal
       doc.setFontSize(14).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
       doc.text("RELATÓRIO DE FATURAMENTO", 148.5, currentY, { align: 'center' })
       currentY += 8
@@ -157,79 +209,94 @@ export default function FaturamentoRelatorios() {
       doc.text(`TIPO: ${reportType.toUpperCase()} | MÊS: ${format(currentDate, 'MMMM yyyy', { locale: ptBR }).toUpperCase()}`, 148.5, currentY, { align: 'center' })
       currentY += 15
 
-      // 1. Tabela Detalhamento Diário
-      doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
-      doc.text("DETALHAMENTO DIÁRIO", margin, currentY)
-      currentY += 5
-
-      const dailyHead = [['Refeições', ...daysArray.map(String), 'Total']]
-      const dailyBody = services.map(s => {
-        let rowTotal = 0
-        const rowData = daysArray.map(day => {
-          const val = records[s.id]?.[day] || 0
-          rowTotal += val
-          return val > 0 ? val.toString() : '-'
-        })
-        return [s.name, ...rowData, rowTotal > 0 ? rowTotal.toString() : '-']
-      })
-
-      autoTable(doc, {
-        startY: currentY,
-        head: dailyHead,
-        body: dailyBody,
-        margin: { left: margin, right: margin },
-        theme: 'grid',
-        headStyles: { fillColor: [37, 99, 235], fontSize: 7, halign: 'center' },
-        styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', textColor: [0, 0, 0] },
-        columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
-      })
-
-      currentY = (doc as any).lastAutoTable.finalY + 15
-
-      // 2. Tabela Resumo (Valores)
-      // Checar se precisa de nova página
-      if (currentY > 150) {
-         doc.addPage()
-         currentY = 15
-      }
-
-      doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
-      doc.text("QUADRO RESUMO (VALORES)", margin, currentY)
-      currentY += 5
-
-      const resumeHead = [['CÓDIGOS', 'REFEIÇÕES', 'QUANTIDADE ESTIMADA', 'VALOR UNITÁRIO R$', 'VALOR TOTAL R$']]
-      let grandTotalPDF = 0
-      const resumeBody = services.map(s => {
-        let estimatedQty = 0
-        daysArray.forEach(day => estimatedQty += (records[s.id]?.[day] || 0))
-        const unitPrice = getPriceForService(s.name)
-        const totalValue = estimatedQty * unitPrice
-        grandTotalPDF += totalValue
-        return [
-          s.code || '-',
-          s.name.toUpperCase(),
-          estimatedQty > 0 ? estimatedQty.toLocaleString('pt-BR') : '-',
-          unitPrice > 0 ? formatCurrency(unitPrice) : '-',
-          totalValue > 0 ? formatCurrency(totalValue) : '-'
-        ]
-      })
-      resumeBody.push(['', 'TOTAL GERAL', '', '', formatCurrency(grandTotalPDF)])
-
-      autoTable(doc, {
-        startY: currentY,
-        head: resumeHead,
-        body: resumeBody,
-        margin: { left: margin, right: margin },
-        theme: 'grid',
-        headStyles: { fillColor: [16, 185, 129], fontSize: 8, halign: 'center' }, // emerald-500
-        styles: { fontSize: 8, cellPadding: 2, halign: 'center', textColor: [0, 0, 0] },
-        columnStyles: { 1: { halign: 'left', fontStyle: 'bold' }, 4: { halign: 'right', fontStyle: 'bold' } },
-        didParseCell: (data) => {
-          if (data.row.index === resumeBody.length - 1 && data.section === 'body') {
-            data.cell.styles.fillColor = [209, 250, 229] // emerald-100
-            data.cell.styles.fontStyle = 'bold'
-          }
+      renderGroups.forEach((group, idx) => {
+        if (idx > 0) {
+           doc.addPage()
+           currentY = 15
         }
+
+        // Título do Grupo
+        if (reportType === 'todos') {
+           doc.setFontSize(12).setFont('helvetica', 'bold').setTextColor(15, 23, 42)
+           doc.text(`TIPO: ${group.title}`, margin, currentY)
+           currentY += 8
+        }
+
+        // 1. Tabela Detalhamento Diário
+        doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
+        doc.text("DETALHAMENTO DIÁRIO", margin, currentY)
+        currentY += 5
+
+        const dailyHead = [['Refeições', ...daysArray.map(String), 'Total']]
+        const dailyBody = group.services.map(s => {
+          let rowTotal = 0
+          const rowData = daysArray.map(day => {
+            const val = group.records[s.id]?.[day] || 0
+            rowTotal += val
+            return val > 0 ? val.toString() : '-'
+          })
+          return [s.name, ...rowData, rowTotal > 0 ? rowTotal.toString() : '-']
+        })
+
+        autoTable(doc, {
+          startY: currentY,
+          head: dailyHead,
+          body: dailyBody,
+          margin: { left: margin, right: margin },
+          theme: 'grid',
+          headStyles: { fillColor: [37, 99, 235], fontSize: 7, halign: 'center' },
+          styles: { fontSize: 7, cellPadding: 1.5, halign: 'center', textColor: [0, 0, 0] },
+          columnStyles: { 0: { halign: 'left', fontStyle: 'bold' } },
+        })
+
+        currentY = (doc as any).lastAutoTable.finalY + 15
+
+        // Checar se precisa de nova página para o Resumo
+        if (currentY > 150) {
+           doc.addPage()
+           currentY = 15
+        }
+
+        doc.setFontSize(10).setFont('helvetica', 'bold').setTextColor(0, 0, 0)
+        doc.text("QUADRO RESUMO (VALORES)", margin, currentY)
+        currentY += 5
+
+        const resumeHead = [['CÓDIGOS', 'REFEIÇÕES', 'QUANTIDADE ESTIMADA', 'VALOR UNITÁRIO R$', 'VALOR TOTAL R$']]
+        let grandTotalPDF = 0
+        const resumeBody = group.services.map(s => {
+          let estimatedQty = 0
+          daysArray.forEach(day => estimatedQty += (group.records[s.id]?.[day] || 0))
+          const unitPrice = getPriceForService(s.name)
+          const totalValue = estimatedQty * unitPrice
+          grandTotalPDF += totalValue
+          return [
+            s.code || '-',
+            s.name.toUpperCase(),
+            estimatedQty > 0 ? estimatedQty.toLocaleString('pt-BR') : '-',
+            unitPrice > 0 ? formatCurrency(unitPrice) : '-',
+            totalValue > 0 ? formatCurrency(totalValue) : '-'
+          ]
+        })
+        resumeBody.push(['', 'TOTAL GERAL', '', '', formatCurrency(grandTotalPDF)])
+
+        autoTable(doc, {
+          startY: currentY,
+          head: resumeHead,
+          body: resumeBody,
+          margin: { left: margin, right: margin },
+          theme: 'grid',
+          headStyles: { fillColor: [16, 185, 129], fontSize: 8, halign: 'center' },
+          styles: { fontSize: 8, cellPadding: 2, halign: 'center', textColor: [0, 0, 0] },
+          columnStyles: { 1: { halign: 'left', fontStyle: 'bold' }, 4: { halign: 'right', fontStyle: 'bold' } },
+          didParseCell: (data) => {
+            if (data.row.index === resumeBody.length - 1 && data.section === 'body') {
+              data.cell.styles.fillColor = [209, 250, 229] 
+              data.cell.styles.fontStyle = 'bold'
+            }
+          }
+        })
+
+        currentY = (doc as any).lastAutoTable.finalY + 15
       })
 
       doc.save(`Relatorio_Faturamento_${format(currentDate, 'MM-yyyy')}.pdf`)
@@ -241,16 +308,10 @@ export default function FaturamentoRelatorios() {
     }
   }
 
-  const daysInMonth = getDaysInMonth(currentDate)
-  const daysArray = Array.from({ length: daysInMonth }, (_, i) => i + 1)
-
-  // Calcular TOTAIS
-  let grandTotal = 0
-
   return (
     <div className="w-full max-w-full overflow-x-hidden space-y-6 animate-in fade-in duration-500 pb-10 px-4 md:px-0">
       
-      {/* Controles para Tela (Não serão impressos) */}
+      {/* Controles para Tela */}
       <div className="print:hidden space-y-6">
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -318,15 +379,8 @@ export default function FaturamentoRelatorios() {
           <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
         </div>
       ) : (
-        <div className="print:block hidden">
-            {/* Espaçador pra forçar display print, opcional */}
-        </div>
-      )}
-
-      {/* ÁREA DE IMPRESSÃO */}
-      {!loading && (
-        <div id="print-area" className="bg-white text-black p-4 md:p-8 rounded-3xl shadow-xl border border-slate-200 w-full overflow-x-auto">
-           {/* Cabeçalho de Impressão */}
+        <div className="bg-white text-black p-4 md:p-8 rounded-3xl shadow-xl border border-slate-200 w-full overflow-x-auto">
+           {/* Cabeçalho */}
            <div className="text-center mb-8 border-b-2 border-slate-800 pb-4">
               <h1 className="text-2xl font-black uppercase tracking-widest text-slate-900">RELATÓRIO DE FATURAMENTO</h1>
               <h2 className="text-lg font-bold text-slate-700 mt-2">
@@ -334,103 +388,120 @@ export default function FaturamentoRelatorios() {
               </h2>
            </div>
 
-           {/* 1. Tabela Detalhada (Dias) */}
-           <div className="mb-12">
-              <h3 className="font-black text-sm uppercase tracking-widest text-slate-800 mb-4 bg-slate-100 p-2 inline-block rounded-md border border-slate-300">
-                 Detalhamento Diário
-              </h3>
-              <div className="overflow-x-auto w-full print:overflow-visible">
-                <table className="w-full text-[10px] border-collapse border border-slate-400 font-mono table-fixed break-inside-avoid print:w-[100%]">
-                  <thead>
-                    <tr className="bg-slate-200 text-slate-900">
-                      <th className="border border-slate-400 p-1 w-24 font-bold uppercase text-left break-words">Refeições</th>
-                      {daysArray.map(day => (
-                        <th key={day} className="border border-slate-400 p-1 w-6 font-bold text-center">{day}</th>
-                      ))}
-                      <th className="border border-slate-400 p-1 w-12 font-black text-right bg-blue-100">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {services.map(s => {
-                      let rowTotal = 0
-                      return (
-                        <tr key={s.id} className="hover:bg-slate-50">
-                          <td className="border border-slate-400 p-1 font-bold text-slate-800 break-words leading-tight">{s.name}</td>
-                          {daysArray.map(day => {
-                            const val = records[s.id]?.[day] || 0
-                            rowTotal += val
+           {/* Renderização dos Grupos */}
+           {renderGroups.map((group, idx) => {
+             let grandTotal = 0
+
+             return (
+               <div key={group.id} className={cn("w-full", idx > 0 && "mt-16 pt-12 border-t-4 border-slate-800 border-dashed")}>
+                 
+                 {reportType === 'todos' && (
+                   <h2 className="text-xl font-black text-slate-900 mb-8 uppercase tracking-widest bg-slate-100 p-3 rounded-lg border-l-4 border-blue-600">
+                     {group.title}
+                   </h2>
+                 )}
+
+                 {/* 1. Tabela Detalhada (Dias) */}
+                 <div className="mb-12">
+                    <h3 className="font-black text-sm uppercase tracking-widest text-slate-800 mb-4 bg-slate-100 p-2 inline-block rounded-md border border-slate-300">
+                       Detalhamento Diário
+                    </h3>
+                    <div className="overflow-x-auto w-full">
+                      <table className="w-full text-[10px] border-collapse border border-slate-400 font-mono table-fixed">
+                        <thead>
+                          <tr className="bg-slate-200 text-slate-900">
+                            <th className="border border-slate-400 p-1 w-24 font-bold uppercase text-left break-words">Refeições</th>
+                            {daysArray.map(day => (
+                              <th key={day} className="border border-slate-400 p-1 w-6 font-bold text-center">{day}</th>
+                            ))}
+                            <th className="border border-slate-400 p-1 w-12 font-black text-right bg-blue-100">Total</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {group.services.map(s => {
+                            let rowTotal = 0
                             return (
-                              <td key={day} className="border border-slate-400 p-1 text-center text-slate-600">
-                                {val > 0 ? val : '-'}
-                              </td>
+                              <tr key={s.id} className="hover:bg-slate-50">
+                                <td className="border border-slate-400 p-1 font-bold text-slate-800 break-words leading-tight">{s.name}</td>
+                                {daysArray.map(day => {
+                                  const val = group.records[s.id]?.[day] || 0
+                                  rowTotal += val
+                                  return (
+                                    <td key={day} className="border border-slate-400 p-1 text-center text-slate-600">
+                                      {val > 0 ? val : '-'}
+                                    </td>
+                                  )
+                                })}
+                                <td className="border border-slate-400 p-1 text-right font-black bg-blue-50 text-blue-900">
+                                  {rowTotal > 0 ? rowTotal : '-'}
+                                </td>
+                              </tr>
                             )
                           })}
-                          <td className="border border-slate-400 p-1 text-right font-black bg-blue-50 text-blue-900">
-                            {rowTotal > 0 ? rowTotal : '-'}
-                          </td>
+                        </tbody>
+                      </table>
+                    </div>
+                 </div>
+
+                 {/* 2. Tabela Resumo Valorizado */}
+                 <div className="page-break-before-auto break-inside-avoid">
+                    <h3 className="font-black text-sm uppercase tracking-widest text-slate-800 mb-4 bg-emerald-100 p-2 inline-block rounded-md border border-emerald-300">
+                       Quadro Resumo (Valores)
+                    </h3>
+                    <table className="w-full max-w-4xl text-xs md:text-sm border-collapse border-2 border-slate-800 font-sans mx-auto">
+                      <thead>
+                        <tr className="bg-emerald-100 text-slate-900 border-b-2 border-slate-800">
+                          <th className="border border-slate-800 p-2 font-black uppercase text-center w-32">CÓDIGOS</th>
+                          <th className="border border-slate-800 p-2 font-black uppercase text-center">REFEIÇÕES</th>
+                          <th className="border border-slate-800 p-2 font-black uppercase text-center w-32">QUANTIDADE ESTIMADA</th>
+                          <th className="border border-slate-800 p-2 font-black uppercase text-center w-32">VALOR UNITÁRIO R$</th>
+                          <th className="border border-slate-800 p-2 font-black uppercase text-center w-32 bg-emerald-200">VALOR TOTAL R$</th>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-           </div>
+                      </thead>
+                      <tbody>
+                        {group.services.map(s => {
+                          let estimatedQty = 0
+                          daysArray.forEach(day => {
+                            estimatedQty += (group.records[s.id]?.[day] || 0)
+                          })
+                          
+                          const unitPrice = getPriceForService(s.name)
+                          const totalValue = estimatedQty * unitPrice
+                          grandTotal += totalValue
 
-           {/* 2. Tabela Resumo Valorizado (Conforme Print 2) */}
-           <div className="page-break-before-auto break-inside-avoid">
-              <h3 className="font-black text-sm uppercase tracking-widest text-slate-800 mb-4 bg-emerald-100 p-2 inline-block rounded-md border border-emerald-300">
-                 Quadro Resumo (Valores)
-              </h3>
-              <table className="w-full max-w-4xl text-xs md:text-sm border-collapse border-2 border-slate-800 font-sans mx-auto">
-                <thead>
-                  <tr className="bg-emerald-100 text-slate-900 border-b-2 border-slate-800">
-                    <th className="border border-slate-800 p-2 font-black uppercase text-center w-32">CÓDIGOS</th>
-                    <th className="border border-slate-800 p-2 font-black uppercase text-center">REFEIÇÕES</th>
-                    <th className="border border-slate-800 p-2 font-black uppercase text-center w-32">QUANTIDADE ESTIMADA</th>
-                    <th className="border border-slate-800 p-2 font-black uppercase text-center w-32">VALOR UNITÁRIO R$</th>
-                    <th className="border border-slate-800 p-2 font-black uppercase text-center w-32 bg-emerald-200">VALOR TOTAL R$</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {services.map(s => {
-                    let estimatedQty = 0
-                    daysArray.forEach(day => {
-                      estimatedQty += (records[s.id]?.[day] || 0)
-                    })
-                    
-                    const unitPrice = getPriceForService(s.name)
-                    const totalValue = estimatedQty * unitPrice
-                    grandTotal += totalValue
+                          return (
+                            <tr key={s.id} className="hover:bg-slate-50 odd:bg-emerald-50/30">
+                              <td className="border border-slate-800 p-2 font-bold text-center text-slate-800 whitespace-nowrap">{s.code || '-'}</td>
+                              <td className="border border-slate-800 p-2 font-bold text-center text-slate-900 uppercase">{s.name}</td>
+                              <td className="border border-slate-800 p-2 font-black text-center text-slate-800 text-base">
+                                {estimatedQty > 0 ? estimatedQty.toLocaleString('pt-BR') : '-'}
+                              </td>
+                              <td className="border border-slate-800 p-2 font-bold text-center text-slate-700">
+                                 {unitPrice > 0 ? formatCurrency(unitPrice) : '-'}
+                              </td>
+                              <td className="border border-slate-800 p-2 font-black text-right pr-4 text-emerald-900 bg-emerald-100/50 text-base">
+                                {totalValue > 0 ? formatCurrency(totalValue) : '-'}
+                              </td>
+                            </tr>
+                          )
+                        })}
+                        
+                        {/* Linha de Total Geral */}
+                        <tr className="bg-emerald-100 border-t-2 border-slate-800 text-slate-900">
+                           <td colSpan={4} className="border border-slate-800 p-3 font-black text-center text-base uppercase tracking-widest">
+                              Total Geral
+                           </td>
+                           <td className="border border-slate-800 p-3 font-black text-right pr-4 text-emerald-900 text-lg">
+                              {formatCurrency(grandTotal)}
+                           </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                 </div>
 
-                    return (
-                      <tr key={s.id} className="hover:bg-slate-50 odd:bg-emerald-50/30">
-                        <td className="border border-slate-800 p-2 font-bold text-center text-slate-800 whitespace-nowrap">{s.code || '-'}</td>
-                        <td className="border border-slate-800 p-2 font-bold text-center text-slate-900 uppercase">{s.name}</td>
-                        <td className="border border-slate-800 p-2 font-black text-center text-slate-800 text-base">
-                          {estimatedQty > 0 ? estimatedQty.toLocaleString('pt-BR') : '-'}
-                        </td>
-                        <td className="border border-slate-800 p-2 font-bold text-center text-slate-700">
-                           {unitPrice > 0 ? formatCurrency(unitPrice) : '-'}
-                        </td>
-                        <td className="border border-slate-800 p-2 font-black text-right pr-4 text-emerald-900 bg-emerald-100/50 text-base">
-                          {totalValue > 0 ? formatCurrency(totalValue) : '-'}
-                        </td>
-                      </tr>
-                    )
-                  })}
-                  
-                  {/* Linha de Total Geral */}
-                  <tr className="bg-emerald-100 border-t-2 border-slate-800 text-slate-900">
-                     <td colSpan={4} className="border border-slate-800 p-3 font-black text-center text-base uppercase tracking-widest">
-                        Total Geral
-                     </td>
-                     <td className="border border-slate-800 p-3 font-black text-right pr-4 text-emerald-900 text-lg">
-                        {formatCurrency(grandTotal)}
-                     </td>
-                  </tr>
-                </tbody>
-              </table>
-           </div>
+               </div>
+             )
+           })}
 
         </div>
       )}
