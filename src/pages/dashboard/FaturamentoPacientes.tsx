@@ -37,18 +37,14 @@ export default function FaturamentoPacientes() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
 
-      const { data: profile } = await supabase.from('profiles').select('unidade_id').eq('id', user.id).single()
-      if (!profile?.unidade_id) return
+      const { data: profile } = await supabase.from('profiles').select('institution_id').eq('id', user.id).single()
+      if (!profile?.institution_id) return
 
-      const { data: unit } = await supabase.from('unidades').select('institution_id').eq('id', profile.unidade_id).single()
-      if (!unit?.institution_id) return
-
-      setInstitutionId(unit.institution_id)
+      setInstitutionId(profile.institution_id)
 
       const { data: servs, error: servsError } = await supabase
         .from('hospital_servicos')
         .select('*')
-        .eq('institution_id', unit.institution_id)
         .order('name')
         
       if (servsError) throw servsError
