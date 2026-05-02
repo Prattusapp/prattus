@@ -6,9 +6,12 @@ import { Button } from "@/components/ui/button"
 import { format, addMonths, subMonths, getDaysInMonth, startOfMonth, endOfMonth } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { cn } from "@/lib/utils"
+import jsPDF from "jspdf"
+import html2canvas from "html2canvas"
 
 export default function FaturamentoRelatorios() {
   const [loading, setLoading] = useState(true)
+  const [generatingPDF, setGeneratingPDF] = useState(false)
   const [institutionId, setInstitutionId] = useState<string | null>(null)
   const [currentDate, setCurrentDate] = useState(new Date())
   const [reportType, setReportType] = useState<"pacientes" | "servidores" | "todos">("pacientes")
@@ -139,8 +142,27 @@ export default function FaturamentoRelatorios() {
   const handlePrevMonth = () => setCurrentDate(prev => subMonths(prev, 1))
   const handleNextMonth = () => setCurrentDate(prev => addMonths(prev, 1))
 
-  const handlePrint = () => {
-    window.print()
+  const handlePrint = async () => {
+    const element = document.getElementById('print-area')
+    if (!element) return
+
+    setGeneratingPDF(true)
+    try {
+      const canvas = await html2canvas(element, { scale: 2, useCORS: true })
+      const imgData = canvas.toDataURL('image/png')
+      
+      const pdf = new jsPDF('l', 'mm', 'a4') // Formato paisagem (landscape)
+      const pdfWidth = pdf.internal.pageSize.getWidth()
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+
+      pdf.addImage(imgData, 'PNG', 0, 10, pdfWidth, pdfHeight)
+      pdf.save(`Relatorio_Faturamento_${format(currentDate, 'MM-yyyy')}.pdf`)
+    } catch (err) {
+      console.error(err)
+      alert("Erro ao gerar PDF")
+    } finally {
+      setGeneratingPDF(false)
+    }
   }
 
   const daysInMonth = getDaysInMonth(currentDate)
@@ -162,9 +184,9 @@ export default function FaturamentoRelatorios() {
             </h1>
             <p className="text-sm md:text-base text-muted-foreground mt-1">Gere e imprima relatórios consolidados.</p>
           </div>
-          <Button onClick={handlePrint} className="rounded-xl px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 shadow-md">
-             <Printer className="w-5 h-5 mr-2" />
-             Imprimir Relatório (PDF)
+          <Button onClick={handlePrint} disabled={generatingPDF} className="rounded-xl px-8 bg-emerald-600 hover:bg-emerald-700 text-white font-bold h-12 shadow-md">
+             {generatingPDF ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Printer className="w-5 h-5 mr-2" />}
+             {generatingPDF ? "Gerando PDF..." : "Baixar Relatório (PDF)"}
           </Button>
         </header>
 
@@ -225,9 +247,9 @@ export default function FaturamentoRelatorios() {
         </div>
       )}
 
-      {/* ÁREA DE IMPRESSÃO (Mostra na tela também) */}
+      {/* ÁREA DE IMPRESSÃO */}
       {!loading && (
-        <div className="bg-white text-black p-4 md:p-8 rounded-3xl shadow-xl border border-slate-200 print:shadow-none print:border-none print:p-0 print:m-0 w-full overflow-x-auto print:overflow-visible">
+        <div id="print-area" className="bg-white text-black p-4 md:p-8 rounded-3xl shadow-xl border border-slate-200 w-full overflow-x-auto">
            {/* Cabeçalho de Impressão */}
            <div className="text-center mb-8 border-b-2 border-slate-800 pb-4">
               <h1 className="text-2xl font-black uppercase tracking-widest text-slate-900">RELATÓRIO DE FATURAMENTO</h1>
